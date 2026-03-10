@@ -1,8 +1,68 @@
-export default function ProtectedRoute() {
-  return (
-    <div className="max-w-3xl mx-auto py-12">
-      <h1 className="text-3xl font-bold">About Us</h1>
-      <p className="mt-4 text-gray-600">This is the About page.</p>
-    </div>
-  );
+// import { Navigate } from "react-router-dom";
+// import { useEffect, useState } from "react";
+// import { supabase } from "./supabaseClient";
+
+// export default function ProtectedRoute({ children }) {
+//   const [session, setSession] = useState(undefined);
+
+//   useEffect(() => {
+//     supabase.auth.getSession().then(({ data }) => {
+//       setSession(data.session);
+//     });
+
+//     const { data: listener } = supabase.auth.onAuthStateChange(
+//       (_event, session) => setSession(session)
+//     );
+
+//     return () => listener.subscription.unsubscribe();
+//   }, []);
+
+//   if (session === undefined) {
+//     return (
+//       <div className="p-10 text-white">
+//         <p>Loading...</p>
+//       </div>
+//     );
+//   }
+
+//   if (!session) {
+//     return <Navigate to="/login" replace />;
+//   }
+
+//   return children;
+// }
+import { Navigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
+
+export default function ProtectedRoute({ children }) {
+  const [session, setSession] = useState(undefined); // undefined = still loading
+
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data }) => {
+      setSession(data.session);
+    });
+
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => setSession(session)
+    );
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
+
+  // Still loading
+  if (session === undefined) {
+    return (
+      <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+        <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Not logged in → redirect to login
+  if (!session) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
 }
