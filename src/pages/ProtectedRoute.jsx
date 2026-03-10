@@ -7,6 +7,10 @@ export default function ProtectedRoute({ children }) {
   const [session, setSession] = useState(undefined); // undefined = still loading
 
   useEffect(() => {
+    useEffect(() => {
+  console.log("SESSION:", session);
+}, [session]);
+
     supabase.auth.getSession().then(({ data }) => {
       setSession(data.session);
     });

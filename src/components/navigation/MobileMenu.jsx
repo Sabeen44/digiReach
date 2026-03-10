@@ -88,7 +88,7 @@ export default function MobileMenu({ open, onClose, currentPath, isHome, session
             </>
           )}
 
-          {session && hasSubscription && (
+          {session && (
             <Link
               to="/dashboard"
               onClick={onClose}

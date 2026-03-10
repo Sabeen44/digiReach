@@ -3,6 +3,7 @@ import Hero from "../components/landing/Hero";
 import HowItWorks from "../components/landing/HowItWorks";
 import LogoBanner from "../components/landing/LogoBanner";
 import Testimonials from "../components/landing/Testimonials";
+import CtaBanner from "../components/landing/CtaBanner";
 
 export default function LandingPage() {
   return (
@@ -11,6 +12,7 @@ export default function LandingPage() {
       <HowItWorks />
       <LogoBanner />
       <Testimonials />
+      <CtaBanner/>
    </>
   );
 }
