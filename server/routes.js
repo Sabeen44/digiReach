@@ -5,7 +5,7 @@ import {
   findUserByCustomerId,
   activateSubscription,
   cancelSubscription,
-} from "../services/subscriptionService.js";
+} from "./services/subscriptionService.js";
 
 const router = express.Router();
 
@@ -13,7 +13,10 @@ const router = express.Router();
 // NOTE: This route must be registered with raw body parser in app.js
 // before express.json() middleware
 
+console.log("CLIENT_URL:", process.env.CLIENT_URL);
+
 router.post("/webhook", async (req, res) => {
+    console.log("✅ Webhook route hit");
     const sig = req.headers["stripe-signature"];
 
     let event;
@@ -34,6 +37,8 @@ router.post("/webhook", async (req, res) => {
       case "checkout.session.completed": {
         const session = event.data.object;
         const customerId = session.customer;
+
+        console.log("Webhook metadata userId:", session.metadata?.userId);
 
         const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
         const priceId = lineItems.data[0]?.price?.id;
@@ -64,6 +69,7 @@ router.post("/webhook", async (req, res) => {
 // ── Checkout ──────────────────────────────────────────────────────────────────
 
 router.post("/create-checkout-session", async (req, res) => {
+   console.log("✅ Checkout route hit, body:", req.body);
   const { priceId, userId } = req.body;
   try {
     const session = await stripe.checkout.sessions.create({

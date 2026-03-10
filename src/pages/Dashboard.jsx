@@ -18,7 +18,7 @@ export default function Dashboard() {
   const [selectedPlan, setSelectedPlan] = useState("");
 
   // ── Loading ───────────────────────────────────────────────────────────────
-  if (sessionLoading || loading) {
+  if (loading) {
     return (
       <div className="relative min-h-screen bg-gray-950 flex items-center justify-center">
         <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={dotGrid} />
@@ -28,30 +28,30 @@ export default function Dashboard() {
   }
 
   // ── Unauthenticated ───────────────────────────────────────────────────────
-  if (!session) {
-    return (
-      <div className="relative min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center gap-5 px-6">
-        <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={dotGrid} />
-        <div aria-hidden="true" className="absolute top-0 left-0 pointer-events-none" style={{ filter: "blur(80px)" }}>
-          <div className="bg-gradient-to-tr from-violet-600 to-indigo-400" style={{ width: "40rem", aspectRatio: "1155/678", opacity: 0.12, clipPath: blobClip }} />
-        </div>
-        <div className="relative text-center">
-          <h1 className="text-3xl font-bold">Please log in to view your dashboard</h1>
-          <p className="mt-2 text-sm text-gray-500">You need an active session to access this page.</p>
-        </div>
-        <button
-          onClick={() => navigate("/login")}
-          className="relative inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400 transition-all duration-200"
-          style={{ boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}
-        >
-          Go to Login
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
-          </svg>
-        </button>
-      </div>
-    );
-  }
+  // if (!session) {
+  //   return (
+  //     <div className="relative min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center gap-5 px-6">
+  //       <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={dotGrid} />
+  //       <div aria-hidden="true" className="absolute top-0 left-0 pointer-events-none" style={{ filter: "blur(80px)" }}>
+  //         <div className="bg-gradient-to-tr from-violet-600 to-indigo-400" style={{ width: "40rem", aspectRatio: "1155/678", opacity: 0.12, clipPath: blobClip }} />
+  //       </div>
+  //       <div className="relative text-center">
+  //         <h1 className="text-3xl font-bold">Please log in to view your dashboard</h1>
+  //         <p className="mt-2 text-sm text-gray-500">You need an active session to access this page.</p>
+  //       </div>
+  //       <button
+  //         onClick={() => navigate("/login")}
+  //         className="relative inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400 transition-all duration-200"
+  //         style={{ boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}
+  //       >
+  //         Go to Login
+  //         <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+  //           <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+  //         </svg>
+  //       </button>
+  //     </div>
+  //   );
+  // }
 
   // ── Derived state ─────────────────────────────────────────────────────────
   const isActive      = profile?.subscription_status === "active";
