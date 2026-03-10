@@ -4,30 +4,50 @@ import { useAuth } from "../hooks/useAuth";
 import { useDashboard } from "../hooks/useDashboard";
 import { PLAN_LABELS, PLAN_LOCATION_LIMITS, PLAN_LIST } from "../config/plans";
 
+const dotGrid = {
+  backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
+  backgroundSize: "32px 32px",
+};
+
+const blobClip = "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7% 2%, 72.5% 32.5%, 60.2% 62.4%, 52.4% 68.1%, 47.5% 58.3%, 45.2% 34.5%, 27.5% 76.7%, 0.1% 64.9%, 17.9% 100%, 27.6% 76.8%, 76.1% 97.7%, 74.1% 44.1%)";
+
 export default function Dashboard() {
   const navigate = useNavigate();
   const { session, sessionLoading } = useAuth();
   const { profile, loading, upgrading, portalLoading, handleUpgrade, handlePortal } = useDashboard(session);
   const [selectedPlan, setSelectedPlan] = useState("");
 
-  // ── Loading states ────────────────────────────────────────────────────────
+  // ── Loading ───────────────────────────────────────────────────────────────
   if (sessionLoading || loading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="relative min-h-screen bg-gray-950 flex items-center justify-center">
+        <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={dotGrid} />
         <div className="w-10 h-10 border-4 border-indigo-500 border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
 
+  // ── Unauthenticated ───────────────────────────────────────────────────────
   if (!session) {
     return (
-      <div className="min-h-screen bg-gray-950 p-10 text-white flex flex-col items-center justify-center gap-4">
-        <h1 className="text-3xl font-semibold">Please log in to view your dashboard</h1>
+      <div className="relative min-h-screen bg-gray-950 text-white flex flex-col items-center justify-center gap-5 px-6">
+        <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={dotGrid} />
+        <div aria-hidden="true" className="absolute top-0 left-0 pointer-events-none" style={{ filter: "blur(80px)" }}>
+          <div className="bg-gradient-to-tr from-violet-600 to-indigo-400" style={{ width: "40rem", aspectRatio: "1155/678", opacity: 0.12, clipPath: blobClip }} />
+        </div>
+        <div className="relative text-center">
+          <h1 className="text-3xl font-bold">Please log in to view your dashboard</h1>
+          <p className="mt-2 text-sm text-gray-500">You need an active session to access this page.</p>
+        </div>
         <button
           onClick={() => navigate("/login")}
-          className="rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400 transition"
+          className="relative inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400 transition-all duration-200"
+          style={{ boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}
         >
           Go to Login
+          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
+          </svg>
         </button>
       </div>
     );
@@ -42,9 +62,35 @@ export default function Dashboard() {
   const usageColor    = usagePct >= 100 ? "bg-red-500" : usagePct >= 80 ? "bg-yellow-500" : "bg-indigo-500";
 
   return (
-    <div className="min-h-screen bg-gray-950 px-6 py-12 text-white">
-      <div className="mx-auto max-w-4xl space-y-8">
-        <h1 className="text-4xl font-bold">Dashboard</h1>
+    <div className="relative min-h-screen bg-gray-950 px-6 py-32 text-white">
+
+      {/* Dot grid */}
+      <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={dotGrid} />
+
+      {/* Top-left blob */}
+      <div aria-hidden="true" className="absolute pointer-events-none" style={{ top: "-12rem", left: "-6rem", filter: "blur(80px)" }}>
+        <div className="bg-gradient-to-tr from-violet-600 to-indigo-400" style={{ width: "50rem", aspectRatio: "1155/678", opacity: 0.12, clipPath: blobClip }} />
+      </div>
+
+      {/* Bottom-right blob */}
+      <div aria-hidden="true" className="absolute pointer-events-none" style={{ bottom: "-8rem", right: 0, filter: "blur(80px)" }}>
+        <div className="bg-gradient-to-tl from-pink-500 to-violet-500" style={{ width: "40rem", aspectRatio: "1155/678", opacity: 0.08, clipPath: blobClip }} />
+      </div>
+
+      <div className="relative mx-auto max-w-4xl space-y-8">
+
+        {/* Page header */}
+        <div className="mb-10">
+          <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 backdrop-blur-sm px-4 py-1.5 mb-4">
+            <span className="text-xs font-medium text-indigo-300 tracking-wide uppercase">Account</span>
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-bold text-white tracking-tight">
+            Your{" "}
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 via-violet-400 to-pink-400">
+              Dashboard
+            </span>
+          </h1>
+        </div>
 
         {/* Account */}
         <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] p-6">

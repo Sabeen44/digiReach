@@ -1,39 +1,7 @@
-// import { Navigate } from "react-router-dom";
-// import { useEffect, useState } from "react";
-// import { supabase } from "./supabaseClient";
 
-// export default function ProtectedRoute({ children }) {
-//   const [session, setSession] = useState(undefined);
-
-//   useEffect(() => {
-//     supabase.auth.getSession().then(({ data }) => {
-//       setSession(data.session);
-//     });
-
-//     const { data: listener } = supabase.auth.onAuthStateChange(
-//       (_event, session) => setSession(session)
-//     );
-
-//     return () => listener.subscription.unsubscribe();
-//   }, []);
-
-//   if (session === undefined) {
-//     return (
-//       <div className="p-10 text-white">
-//         <p>Loading...</p>
-//       </div>
-//     );
-//   }
-
-//   if (!session) {
-//     return <Navigate to="/login" replace />;
-//   }
-
-//   return children;
-// }
 import { Navigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { supabase } from "./supabaseClient";
+import { supabase } from "../lib/supabaseClient";
 
 export default function ProtectedRoute({ children }) {
   const [session, setSession] = useState(undefined); // undefined = still loading
