@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
 import Logout from "./Logout";
+import { useAuth } from "../../../hooks/useAuth.jsx";
 
 
-export default function DesktopAuth({ session, hasSubscription }) {
+export default function DesktopAuth() {
+  const { session, hasSubscription } = useAuth();
   return (
     <div className="hidden lg:flex flex-1 justify-end items-center gap-3">
 
