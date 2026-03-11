@@ -2,7 +2,7 @@ import { Dialog, DialogPanel } from "@headlessui/react";
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import digiImage from "../../assets/logos/digiReach-Logo.png";
-import Logout from "../../pages/Logout";
+import Logout from "./Logout";
 
 const navigation = [
   { name: "About", href: "/about" },
