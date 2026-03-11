@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import Logout from "./Logout";
-import { useAuth } from "../../../hooks/useAuth.jsx";
+import { useAuth } from "../../hooks/useAuth.jsx";  
 
 
 export default function DesktopAuth() {

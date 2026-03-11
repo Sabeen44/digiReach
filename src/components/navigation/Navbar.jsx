@@ -56,7 +56,8 @@ export default function NavBar() {
           </div>
 
           <DesktopNav currentPath={currentPath} isHome={isHome} />
-          <DesktopAuth session={session} hasSubscription={hasSubscription} />
+         <DesktopAuth />
+
         </nav>
 
         <MobileMenu

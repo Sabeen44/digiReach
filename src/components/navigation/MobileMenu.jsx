@@ -3,6 +3,8 @@ import { XMarkIcon } from "@heroicons/react/24/outline";
 import { Link } from "react-router-dom";
 import digiImage from "../../assets/logos/digiReach-Logo.png";
 import Logout from "./Logout";
+import { useAuth } from "../../hooks/useAuth.jsx";
+
 
 const navigation = [
   { name: "About", href: "/about" },
@@ -11,7 +13,9 @@ const navigation = [
   { name: "Contact", href: "/contact" },
 ];
 
-export default function MobileMenu({ open, onClose, currentPath, isHome, session, hasSubscription }) {
+export default function MobileMenu({ open, onClose, currentPath, isHome}) {
+  const { session, hasSubscription } = useAuth();
+
   return (
     <Dialog open={open} onClose={onClose} className="lg:hidden">
       <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm" />
