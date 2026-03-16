@@ -13,11 +13,11 @@ export const PLAN_LABELS = {
 export const PLAN_LOCATION_LIMITS = {
   [PRICE_IDS.starter]:    1,
   [PRICE_IDS.growth]:     5,
-  [PRICE_IDS.enterprise]: 10,
+  [PRICE_IDS.enterprise]: Infinity,
 };
 
 export const PLAN_LIST = [
-  { label: "Starter",    price: "$29/mo",  locations: "1 location",   id: PRICE_IDS.starter },
-  { label: "Growth",     price: "$79/mo",  locations: "5 locations",  id: PRICE_IDS.growth },
-  { label: "Enterprise", price: "Custom",  locations: "10 locations", id: PRICE_IDS.enterprise },
+  { label: "Starter",    price: "$10/mo",  locations: "1 location",   id: PRICE_IDS.starter },
+  { label: "Growth",     price: "$20/mo",  locations: "5 locations",  id: PRICE_IDS.growth },
+  { label: "Enterprise", price: "$30/mo",  locations: "All locations", id: PRICE_IDS.enterprise },
 ];

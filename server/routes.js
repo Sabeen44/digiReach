@@ -9,67 +9,68 @@ import {
 
 const router = express.Router();
 
-// ── Webhook ───────────────────────────────────────────────────────────────────
-// NOTE: This route must be registered with raw body parser in app.js
-// before express.json() middleware
-
 console.log("CLIENT_URL:", process.env.CLIENT_URL);
 
+// ── Webhook ───────────────────────────────────────────────────────────────────
 router.post("/webhook", async (req, res) => {
-    console.log("✅ Webhook route hit");
-    const sig = req.headers["stripe-signature"];
+  console.log("✅ Webhook route hit");
+  const sig = req.headers["stripe-signature"];
 
-    let event;
-    try {
-      event = stripe.webhooks.constructEvent(
-        req.body,
-        sig,
-        process.env.STRIPE_WEBHOOK_SECRET
-      );
-    } catch (err) {
-      console.error("❌ Webhook signature verification failed:", err.message);
-      return res.status(400).send(`Webhook Error: ${err.message}`);
-    }
+  let event;
+  try {
+    event = stripe.webhooks.constructEvent(
+      req.body,
+      sig,
+      process.env.STRIPE_WEBHOOK_SECRET
+    );
+  } catch (err) {
+    console.error("❌ Webhook signature verification failed:", err.message);
+    return res.status(400).send(`Webhook Error: ${err.message}`);
+  }
 
-    console.log("🔔 Webhook event:", event.type);
+  console.log("🔔 Webhook event:", event.type);
 
-    switch (event.type) {
-      case "checkout.session.completed": {
-        const session = event.data.object;
-        const customerId = session.customer;
+  switch (event.type) {
+    case "checkout.session.completed": {
+      const session = event.data.object;
+      const customerId = session.customer;
 
-        console.log("Webhook metadata userId:", session.metadata?.userId);
+      console.log("Webhook metadata userId:", session.metadata?.userId);
+      console.log("Full session metadata:", session.metadata);
 
-        const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
-        const priceId = lineItems.data[0]?.price?.id;
-        const locationCount = PLAN_LOCATIONS[priceId] ?? 0;
+      const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+      const priceId = lineItems.data[0]?.price?.id;
+      const locationCount = PLAN_LOCATIONS[priceId] ?? 0;
 
-        let userId = session.metadata?.userId;
-        if (!userId) userId = await findUserByCustomerId(customerId);
+      console.log("priceId:", priceId, "locationCount:", locationCount);
 
-        if (!userId) {
-          console.error("❌ Could not find userId for session:", session.id);
-          break;
-        }
+      let userId = session.metadata?.userId;
+      if (!userId) userId = await findUserByCustomerId(customerId);
 
-        await activateSubscription({ userId, customerId, priceId, locationCount });
+      if (!userId) {
+        console.error("❌ Could not find userId for session:", session.id);
         break;
       }
 
-      case "customer.subscription.deleted": {
-        const customerId = event.data.object.customer;
-        await cancelSubscription(customerId);
-        break;
-      }
+      console.log("📝 Calling activateSubscription for userId:", userId);
+      await activateSubscription({ userId, customerId, priceId, locationCount });
+      console.log("✅ activateSubscription complete");
+      break;
     }
 
-    res.json({ received: true });
+    case "customer.subscription.deleted": {
+      const customerId = event.data.object.customer;
+      await cancelSubscription(customerId);
+      break;
+    }
+  }
+
+  res.json({ received: true });
 });
 
 // ── Checkout ──────────────────────────────────────────────────────────────────
-
 router.post("/create-checkout-session", async (req, res) => {
-   console.log("✅ Checkout route hit, body:", req.body);
+  console.log("✅ Checkout route hit, body:", req.body);
   const { priceId, userId } = req.body;
   try {
     const session = await stripe.checkout.sessions.create({
@@ -78,7 +79,7 @@ router.post("/create-checkout-session", async (req, res) => {
       line_items: [{ price: priceId, quantity: 1 }],
       success_url: `${process.env.CLIENT_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.CLIENT_URL}/pricing`,
-      metadata: { userId },
+      metadata: { userId }, // ✅ userId correctly passed
     });
     res.json({ url: session.url });
   } catch (err) {
@@ -88,9 +89,8 @@ router.post("/create-checkout-session", async (req, res) => {
 });
 
 // ── Upgrade ───────────────────────────────────────────────────────────────────
-
 router.post("/upgrade-plan", async (req, res) => {
-  const { newPriceId, customerId } = req.body;
+  const { newPriceId, customerId, userId } = req.body; // ✅ added userId
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "subscription",
@@ -98,7 +98,7 @@ router.post("/upgrade-plan", async (req, res) => {
       line_items: [{ price: newPriceId, quantity: 1 }],
       success_url: `${process.env.CLIENT_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.CLIENT_URL}/dashboard`,
-      metadata: { customerId },
+      metadata: { userId, customerId }, // ✅ was only { customerId } — webhook couldn't find user!
     });
     res.json({ url: session.url });
   } catch (err) {
@@ -108,7 +108,6 @@ router.post("/upgrade-plan", async (req, res) => {
 });
 
 // ── Billing Portal ────────────────────────────────────────────────────────────
-
 router.post("/create-portal-session", async (req, res) => {
   const { customerId } = req.body;
   try {
@@ -124,13 +123,39 @@ router.post("/create-portal-session", async (req, res) => {
 });
 
 // ── Retrieve Session ──────────────────────────────────────────────────────────
-
 router.get("/session/:id", async (req, res) => {
   try {
     const session = await stripe.checkout.sessions.retrieve(req.params.id);
     res.json(session);
   } catch (err) {
     console.error("Stripe session retrieval error:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// ── Verify Session (debug) ────────────────────────────────────────────────────
+// Usage: GET /api/stripe/verify-session?session_id=cs_test_xxx
+router.get("/verify-session", async (req, res) => {
+  const { session_id } = req.query;
+  if (!session_id) return res.status(400).json({ error: "session_id required" });
+
+  try {
+    const session = await stripe.checkout.sessions.retrieve(session_id);
+    const lineItems = await stripe.checkout.sessions.listLineItems(session_id);
+
+    console.log("🔍 Session status:", session.status);
+    console.log("🔍 Session metadata:", session.metadata);
+    console.log("🔍 Line items:", lineItems.data);
+
+    res.json({
+      status: session.status,
+      metadata: session.metadata,         // ✅ check userId is here
+      customerId: session.customer,
+      priceId: lineItems.data[0]?.price?.id,
+      locationCount: PLAN_LOCATIONS[lineItems.data[0]?.price?.id] ?? 0,
+    });
+  } catch (err) {
+    console.error("Verify session error:", err);
     res.status(500).json({ error: err.message });
   }
 });

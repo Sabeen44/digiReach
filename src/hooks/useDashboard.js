@@ -15,16 +15,25 @@ export function useDashboard(session) {
 
     const userId = session.user.id;
 
-    async function fetchProfile() {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("subscription_status, plan_id, stripe_customer_id, location_count")
-        .eq("id", userId)
-        .single();
+   async function fetchProfile() {
+  const { data, error } = await supabase
+    .from("profiles")
+    .select("subscription_status, plan_id, stripe_customer_id")  // remove location_count here
+    .eq("id", userId)
+    .single();
 
-      if (!error && data) setProfile(data);
-      setLoading(false);
-    }
+  if (!error && data) {
+    // Count distinct locations with approved ads
+    const { count } = await supabase
+      .from("ads")
+      .select("store_location_id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "approved");
+
+    setProfile({ ...data, location_count: count ?? 0 });  // add it here dynamically
+  }
+  setLoading(false);
+}
 
     fetchProfile();
 

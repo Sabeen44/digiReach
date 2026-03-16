@@ -13,6 +13,8 @@ import MarketingLayout from "./layouts/MarketingLayout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
+import Onboarding from "./pages/Onboarding";
+import UploadAd from "./pages/UploadAd";           // ← add this
 
 export default function App() {
   return (
@@ -27,12 +29,22 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/onboarding" element={<Onboarding />} />
 
         <Route
           path="/dashboard"
           element={
             <ProtectedRoute>
               <Dashboard />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/upload-ad"                         // ← add this
+          element={
+            <ProtectedRoute>
+              <UploadAd />
             </ProtectedRoute>
           }
         />
