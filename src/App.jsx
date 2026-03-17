@@ -15,6 +15,8 @@ import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Onboarding from "./pages/Onboarding";
 import UploadAd from "./pages/UploadAd";           // ← add this
+import AdminDashboard from "./pages/AdminDashboard";
+
 
 export default function App() {
   return (
@@ -58,6 +60,16 @@ export default function App() {
           }
         />
       </Route>
+
+      import AdminDashboard from "./pages/AdminDashboard";
+
+      <Route 
+      path="/admin" 
+      element={
+      <ProtectedRoute>
+          <AdminDashboard />
+      </ProtectedRoute>} />
+      
     </Routes>
   );
 }

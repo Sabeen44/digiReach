@@ -5,6 +5,7 @@ import digiImage from "../../assets/logos/digiReach-Logo.png";
 import Logout from "./Logout";
 import { useAuth } from "../../hooks/useAuth.jsx";
 
+const ADMIN_EMAIL = "admintest@example.com"; // ← same as AdminDashboard.jsx
 
 const navigation = [
   { name: "About", href: "/about" },
@@ -13,8 +14,9 @@ const navigation = [
   { name: "Contact", href: "/contact" },
 ];
 
-export default function MobileMenu({ open, onClose, currentPath, isHome}) {
+export default function MobileMenu({ open, onClose, currentPath, isHome }) {
   const { session, hasSubscription } = useAuth();
+  const isAdmin = session?.user?.email === ADMIN_EMAIL;
 
   return (
     <Dialog open={open} onClose={onClose} className="lg:hidden">
@@ -99,6 +101,20 @@ export default function MobileMenu({ open, onClose, currentPath, isHome}) {
               className="flex items-center justify-center gap-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-sm font-semibold text-white hover:bg-white/10 transition"
             >
               Dashboard
+            </Link>
+          )}
+
+          {/* Admin link — only visible to admin email */}
+          {isAdmin && (
+            <Link
+              to="/admin"
+              onClick={onClose}
+              className="flex items-center justify-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-3 text-sm font-semibold text-indigo-300 hover:bg-indigo-500/20 hover:border-indigo-500/50 transition"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+              Admin
             </Link>
           )}
 
