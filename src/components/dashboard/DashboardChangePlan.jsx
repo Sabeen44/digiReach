@@ -1,5 +1,7 @@
 import { PLAN_LIST, PRICE_IDS } from "../../config/plans";
 
+const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4242";
+
 export default function DashboardChangePlan({
   profile,
   selectedPlan,
@@ -23,7 +25,7 @@ export default function DashboardChangePlan({
         {PLAN_LIST.map((plan) => (
           <div
             key={plan.id}
-            onClick={() => setSelectedPlan(plan.id)}
+            onClick={() => {  console.log("plan selected:", plan.id);setSelectedPlan(plan.id)}}
             className={`cursor-pointer rounded-xl border p-4 transition-all duration-200 ${
               selectedPlan === plan.id
                 ? "border-indigo-500/60 bg-indigo-500/10"
@@ -44,12 +46,16 @@ export default function DashboardChangePlan({
 
       <div className="flex flex-wrap gap-3">
         <button
+        type="button"
           disabled={!selectedPlan || upgrading || selectedPlan === profile?.plan_id}
-          onClick={() => handleUpgrade(selectedPlan)}
+          onClick={() => {console.log("button clicked");
+            console.log("handleUpgrade type:", typeof handleUpgrade); // ← add
+  console.log("handleUpgrade:", handleUpgrade);              // ← add
+            handleUpgrade(selectedPlan)}}
           className="rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400 disabled:bg-white/[0.06] disabled:text-gray-500 disabled:cursor-not-allowed transition-all duration-200"
           style={{ boxShadow: !selectedPlan || selectedPlan === profile?.plan_id ? "none" : "0 4px 20px rgba(99,102,241,0.3)" }}
         >
-          {upgrading ? "Redirecting…" : "Switch Plan"}
+          {upgrading ? "Updating…" : "Switch Plan"}
         </button>
 
         <button
@@ -63,6 +69,3 @@ export default function DashboardChangePlan({
     </div>
   );
 }
-
-
-

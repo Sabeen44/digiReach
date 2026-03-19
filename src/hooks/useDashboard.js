@@ -11,6 +11,7 @@ export function useDashboard(session) {
 
   // Fetch profile + subscribe to realtime updates
   useEffect(() => {
+    console.log("useEffect running, session:", session);
     if (!session) return;
 
     const userId = session.user.id;
@@ -21,18 +22,23 @@ export function useDashboard(session) {
     .select("subscription_status, plan_id, stripe_customer_id")  // remove location_count here
     .eq("id", userId)
     .single();
+     console.log("fetchProfile data:", data);   // ← add
+  console.log("fetchProfile error:", error); // ← add
 
   if (!error && data) {
-    // Count distinct locations with approved ads
-    const { count } = await supabase
-      .from("ads")
-      .select("store_location_id", { count: "exact", head: true })
-      .eq("user_id", userId)
-      .eq("status", "approved");
+  const { count } = await supabase
+    .from("ads")
+    .select("store_location_id", { count: "exact", head: true })
+    .eq("user_id", userId)
+    .eq("status", "approved");
 
-    setProfile({ ...data, location_count: count ?? 0 });  // add it here dynamically
-  }
-  setLoading(false);
+  const profileData = { ...data, location_count: count ?? 0 };
+  console.log("profile loaded:", profileData); // ← add this
+  console.log("profileData:", profileData);                              // ← add
+  console.log("stripe_customer_id in profileData:", profileData.stripe_customer_id); // ← add
+  setProfile(profileData);
+}
+setLoading(false);
 }
 
     fetchProfile();
@@ -49,23 +55,45 @@ export function useDashboard(session) {
     return () => supabase.removeChannel(channel);
   }, [session]);
 
-  const handleUpgrade = async (selectedPlan) => {
-    if (!selectedPlan || !profile?.stripe_customer_id) return;
-    setUpgrading(true);
-    try {
-      const res = await fetch(`${apiBase}/upgrade-plan`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ newPriceId: selectedPlan, customerId: profile.stripe_customer_id }),
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch (err) {
-      console.error("Upgrade error:", err);
-    } finally {
-      setUpgrading(false);
+ const handleUpgrade = async (selectedPlan) => {
+  console.log("handleUpgrade called");
+  console.log("profile at time of upgrade:", profile); // ← add
+  console.log("selectedPlan:", selectedPlan);
+  console.log("stripe_customer_id:", profile?.stripe_customer_id);
+
+  console.log("handleUpgrade called");                              // ← add
+  console.log("selectedPlan:", selectedPlan);                       // ← add
+  console.log("stripe_customer_id:", profile?.stripe_customer_id);
+
+  if (!selectedPlan || !profile?.stripe_customer_id){
+
+    console.log("returning early — missing selectedPlan or customerId")
+    return;
+  }
+  
+
+  setUpgrading(true);
+  try {
+    const res = await fetch(`${apiBase}/upgrade-plan`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        newPriceId: selectedPlan,
+        customerId: profile.stripe_customer_id,
+      }),
+    });
+    const data = await res.json();
+    if (data.url) {
+      window.location.href = data.url;
+    } else if (data.success) {
+      window.location.href = "/dashboard";
     }
-  };
+  } catch (err) {
+    console.error("Upgrade error:", err);
+  } finally {
+    setUpgrading(false);
+  }
+};
 
   const handlePortal = async () => {
     if (!profile?.stripe_customer_id) return;

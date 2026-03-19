@@ -1,34 +1,36 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../lib/supabaseClient";
 import { PLAN_LOCATION_LIMITS } from "../config/plans";
 
-export default function UploadAdForm() {
+export default function UploadAd() {
+  const navigate = useNavigate();
   const [locations, setLocations] = useState([]);
   const [selectedLocations, setSelectedLocations] = useState([]);
   const [locationLimit, setLocationLimit] = useState(0);
   const [file, setFile] = useState(null);
   const [uploading, setUploading] = useState(false);
   const [message, setMessage] = useState("");
-  const [previewUrl, setPreviewUrl] = useState("");
-  const [previewType, setPreviewType] = useState("");
+  const [uploadedAd, setUploadedAd] = useState(null); // ← stores success data
 
   useEffect(() => {
     const fetchData = async () => {
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Fetch user's plan
       const { data: profile } = await supabase
         .from("profiles")
-        .select("plan_id")
+        .select("plan_id, subscription_status")
         .eq("id", user.id)
         .single();
 
-      if (profile) {
-        const limit = PLAN_LOCATION_LIMITS[profile.plan_id];
-        setLocationLimit(limit ?? 1);
+      if (!profile || profile.subscription_status !== "active") {
+        navigate("/pricing");
+        return;
       }
 
-      // Fetch active locations
+      const limit = PLAN_LOCATION_LIMITS[profile.plan_id];
+      setLocationLimit(limit ?? 1);
+
       const { data: locs, error } = await supabase
         .from("store_locations")
         .select("*")
@@ -67,7 +69,6 @@ export default function UploadAdForm() {
     try {
       const fileExt = file.name.split(".").pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      // Use first selected location as folder
       const filePath = `${selectedLocations[0]}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
@@ -90,11 +91,17 @@ export default function UploadAdForm() {
       const { error: dbError } = await supabase.from("ads").insert(inserts);
       if (dbError) throw dbError;
 
-      setMessage(`Ad uploaded successfully to ${selectedLocations.length} location${selectedLocations.length > 1 ? "s" : ""}!`);
-      setPreviewUrl(fileUrl);
-      setPreviewType(file.type);
-      setSelectedLocations([]);
-      setFile(null);
+      // Store success data to show success state
+      const selectedLocationNames = locations
+        .filter((l) => selectedLocations.includes(l.id))
+        .map((l) => `${l.store_name} — ${l.city}`);
+
+      setUploadedAd({
+        fileUrl,
+        fileType: file.type,
+        locationNames: selectedLocationNames,
+      });
+
     } catch (err) {
       setMessage("Upload failed. Please try again.");
     } finally {
@@ -104,10 +111,100 @@ export default function UploadAdForm() {
 
   const isAtLimit = locationLimit !== Infinity && selectedLocations.length >= locationLimit;
 
+  // ── Success state ─────────────────────────────────────────────────────────
+  if (uploadedAd) {
+    return (
+      <div className="min-h-screen bg-gray-50 px-6 py-20">
+        <div className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-400 via-violet-400 to-pink-400 z-50" />
+
+        {/* Background glows */}
+        <div className="fixed top-0 left-0 w-96 h-96 bg-indigo-100 rounded-full blur-3xl opacity-40 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
+        <div className="fixed bottom-0 right-0 w-96 h-96 bg-pink-100 rounded-full blur-3xl opacity-40 translate-x-1/2 translate-y-1/2 pointer-events-none" />
+
+        <div className="relative mx-auto max-w-lg text-center space-y-8">
+
+          {/* Success icon */}
+          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-indigo-500 via-violet-500 to-pink-500 flex items-center justify-center mx-auto shadow-lg shadow-indigo-200">
+            <svg className="w-10 h-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-indigo-50 px-4 py-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400" />
+            <span className="text-xs font-medium text-indigo-500 tracking-wide uppercase">Ad Submitted</span>
+          </div>
+
+          {/* Heading */}
+          <div>
+            <h1 className="text-4xl font-bold text-gray-900 tracking-tight">
+              Ad{" "}
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-500 via-violet-500 to-pink-500">
+                Uploaded!
+              </span>
+            </h1>
+            <p className="mt-3 text-gray-400 text-sm">
+              Your ad has been submitted for review. You'll see it go live once approved.
+            </p>
+          </div>
+
+          Preview
+          <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4">
+            {uploadedAd.fileType?.startsWith("video") ? (
+              <video src={uploadedAd.fileUrl} controls className="w-full rounded-xl" />
+            ) : (
+              <img src={uploadedAd.fileUrl} alt="Ad preview" className="w-full rounded-xl object-cover max-h-64" />
+            )}
+          </div>
+
+          {/* Locations */}
+          <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-4 text-left space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-widest text-gray-400">Submitted to</p>
+            {uploadedAd.locationNames.map((name, i) => (
+              <div key={i} className="flex items-center gap-2">
+                <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 shrink-0" />
+                <span className="text-sm text-gray-700">{name}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Pending badge */}
+          <div className="inline-flex items-center gap-2 rounded-full bg-yellow-50 border border-yellow-200 px-4 py-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
+            <span className="text-xs text-yellow-600 font-medium">Pending admin approval</span>
+          </div>
+
+          {/* Buttons */}
+          <div className="flex flex-col gap-3 max-w-xs mx-auto">
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="w-full rounded-xl bg-indigo-500 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-400 transition-all duration-200"
+              style={{ boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}
+            >
+              Go to Dashboard
+            </button>
+            <button
+              onClick={() => {
+                setUploadedAd(null);
+                setSelectedLocations([]);
+                setFile(null);
+                setMessage("");
+              }}
+              className="w-full rounded-xl border border-gray-200 bg-white px-6 py-3 text-sm font-semibold text-gray-500 hover:text-gray-700 hover:border-indigo-200 transition-all duration-200"
+            >
+              Upload Another Ad
+            </button>
+          </div>
+
+        </div>
+      </div>
+    );
+  }
+
+  // ── Upload form ───────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-20">
-
-      {/* Gradient top bar */}
       <div className="fixed top-0 left-0 right-0 h-1 bg-gradient-to-r from-indigo-400 via-violet-400 to-pink-400 z-50" />
 
       <div className="mx-auto max-w-2xl space-y-8">
@@ -124,7 +221,7 @@ export default function UploadAdForm() {
             </span>
           </h1>
           <p className="mt-3 text-gray-400 text-sm">
-            Select your store location{locationLimit !== 1 ? "s" : ""} and upload your image or video.
+            Select your store locations and upload your image or video.
           </p>
         </div>
 
@@ -218,10 +315,7 @@ export default function UploadAdForm() {
                 type="file"
                 accept="image/*,video/*"
                 className="hidden"
-                onChange={(e) => {
-                  setFile(e.target.files[0]);
-                  setPreviewUrl("");
-                }}
+                onChange={(e) => setFile(e.target.files[0])}
               />
             </label>
           </div>
@@ -233,7 +327,9 @@ export default function UploadAdForm() {
             className="w-full rounded-xl bg-indigo-500 px-6 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400 disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed transition-all duration-200"
             style={{ boxShadow: uploading ? "none" : "0 4px 20px rgba(99,102,241,0.2)" }}
           >
-            {uploading ? "Uploading…" : `Upload Ad${selectedLocations.length > 1 ? ` to ${selectedLocations.length} Locations` : ""}`}
+            {uploading
+              ? "Uploading…"
+              : `Upload Ad${selectedLocations.length > 1 ? ` to ${selectedLocations.length} Locations` : ""}`}
           </button>
 
           {/* Message */}
@@ -245,23 +341,6 @@ export default function UploadAdForm() {
             </p>
           )}
         </div>
-
-        {/* Preview */}
-        {previewUrl && (
-          <div className="rounded-2xl bg-white border border-gray-100 shadow-sm p-6 space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-widest text-gray-400">Preview</h2>
-            {previewType?.startsWith("video") ? (
-              <video src={previewUrl} controls className="w-full rounded-xl" />
-            ) : (
-              <img src={previewUrl} alt="Ad preview" className="w-full rounded-xl object-cover" />
-            )}
-            <div className="inline-flex items-center gap-2 rounded-full bg-yellow-50 border border-yellow-200 px-3 py-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-yellow-400" />
-              <span className="text-xs text-yellow-600 font-medium">Pending admin approval</span>
-            </div>
-          </div>
-        )}
-
       </div>
     </div>
   );

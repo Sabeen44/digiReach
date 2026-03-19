@@ -6,9 +6,9 @@ import { PLAN_LOCATION_LIMITS, PRICE_IDS } from "../config/plans";
 import { supabase } from "../lib/supabaseClient";
 import DashboardAccount from "../components/dashboard/DashboardAccount";
 import DashboardSubscription from "../components/dashboard/DashboardSubscription";
-import DashboardLocations from "../components/dashboard/DashboardLocations";
-import DashboardMyAds from "../components/dashboard/DashboardMyAds";
 import DashboardChangePlan from "../components/dashboard/DashboardChangePlan";
+import DashboardMyLocations from "../components/dashboard/DashboardMyLocations";
+
 
 const dotGrid = {
   backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
@@ -88,19 +88,14 @@ export default function Dashboard() {
           navigate={navigate}
         />
 
-        {isActive && (
-          <DashboardLocations
-            locationCount={locationCount}
-            locationLimit={locationLimit}
-            isEnterprise={isEnterprise}
-            totalLocations={totalLocations}
-            navigate={navigate}
-          />
-        )}
 
-        {isActive && (
-          <DashboardMyAds userId={session.user.id} navigate={navigate} />
-        )}
+      {isActive && (
+  <DashboardMyLocations
+    userId={session.user.id}
+    locationCount={locationCount}
+    locationLimit={locationLimit}
+  />
+)}
 
         {isActive && (
           <DashboardChangePlan

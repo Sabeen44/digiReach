@@ -1,5 +1,5 @@
 import express from "express";
-import { stripe } from "./stripe.js";
+import { stripe, supabaseAdmin } from "./stripe.js";
 import { PLAN_LOCATIONS } from "./config/plans.js";
 import {
   findUserByCustomerId,
@@ -63,6 +63,19 @@ router.post("/webhook", async (req, res) => {
       await cancelSubscription(customerId);
       break;
     }
+
+   case "customer.subscription.updated": {
+  const subscription = event.data.object;
+  const customerId = subscription.customer;
+  const newPriceId = subscription.items.data[0]?.price?.id;
+
+  await supabaseAdmin
+    .from("profiles")
+    .update({ plan_id: newPriceId })
+    .eq("stripe_customer_id", customerId);
+
+  break;
+}
   }
 
   res.json({ received: true });
@@ -90,18 +103,59 @@ router.post("/create-checkout-session", async (req, res) => {
 
 // ── Upgrade ───────────────────────────────────────────────────────────────────
 router.post("/upgrade-plan", async (req, res) => {
-  const { newPriceId, customerId, userId } = req.body; // ✅ added userId
+  const { newPriceId, customerId } = req.body;
+
+ console.log("upgrade-plan hit, customerId:", customerId);  // ← add
+  console.log("newPriceId:", newPriceId);                    // ← add
+
+
   try {
-    const session = await stripe.checkout.sessions.create({
-      mode: "subscription",
+    // Get existing subscription
+    const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
-      line_items: [{ price: newPriceId, quantity: 1 }],
-      success_url: `${process.env.CLIENT_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URL}/dashboard`,
-      metadata: { userId, customerId }, // ✅ was only { customerId } — webhook couldn't find user!
+      status: "active",
+      limit: 1,
     });
-    res.json({ url: session.url });
+
+     console.log("subscriptions found:", subscriptions.data.length); // ← add
+
+    const subscription = subscriptions.data[0];
+
+    if (subscription) {
+
+      console.log("updating subscription:", subscription.id); // ← add
+      console.log("subscriptions found:", subscriptions.data.length);
+console.log("subscription object:", subscriptions.data[0]); // ← add
+console.log("subscription id:", subscriptions.data[0]?.id); // ← add
+console.log("subscriptions found:", subscriptions.data.length);
+console.log("full subscriptions:", JSON.stringify(subscriptions.data)); // ← add
+
+
+      // Update existing subscription — cancels old plan automatically
+      await stripe.subscriptions.update(subscription.id, {
+        items: [{
+          id: subscription.items.data[0].id,
+          price: newPriceId,
+        }],
+        proration_behavior: "create_prorations", // charges/credits difference
+      });
+
+      res.json({ success: true });
+    } else {
+      // No existing subscription — create new checkout
+      const session = await stripe.checkout.sessions.create({
+        mode: "subscription",
+        customer: customerId,
+        line_items: [{ price: newPriceId, quantity: 1 }],
+        success_url: `${process.env.CLIENT_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.CLIENT_URL}/dashboard`,
+        metadata: { customerId },
+      });
+      res.json({ url: session.url });
+    }
   } catch (err) {
+    console.error("Stripe upgrade error:", err.message); // ← change to err.message
+  console.error("Full error:", err); // ← add
     console.error("Stripe upgrade error:", err);
     res.status(500).json({ error: err.message });
   }
