@@ -61,7 +61,7 @@ export default function App() {
         />
       </Route>
 
-      import AdminDashboard from "./pages/AdminDashboard";
+     
 
       <Route 
       path="/admin" 
@@ -69,7 +69,7 @@ export default function App() {
       <ProtectedRoute>
           <AdminDashboard />
       </ProtectedRoute>} />
-      
+
     </Routes>
   );
 }
