@@ -83,7 +83,7 @@ export default function Contact() {
                   </svg>
                 ),
                 label: "Location",
-                value: "Denver, CO",
+                value: "Seattle, WA",
               },
               {
                 icon: (

@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Dialog, DialogPanel } from "@headlessui/react";
+import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import digiScreen2 from "../assets/images/digiscreen2.jpg"
 
 const dotGrid = {
   backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
@@ -110,7 +111,7 @@ export default function About() {
           <div className="relative">
             <div className="rounded-2xl overflow-hidden ring-1 ring-white/10 shadow-2xl">
               <img
-                src="https://images.unsplash.com/photo-1581091012184-5c8af7a4c3f9?q=80&w=1200"
+                src={digiScreen2}
                 alt="Digital signage display"
                 className="object-cover w-full h-full"
               />
