@@ -1,4 +1,7 @@
-import Carousel from "./Carousel";
+// import Carousel from "./Carousel";
+
+import LiveMap from "./LiveMap";
+
 import { Link } from "react-router-dom";
 
 export default function Hero() {
@@ -44,7 +47,7 @@ export default function Hero() {
       </div>
 
       {/* CONTENT */}
-      <div className="relative w-full mx-auto max-w-screen-2xl px-6 sm:px-12 lg:px-20 py-24 lg:py-36 lg:flex lg:items-center lg:justify-between gap-40">
+      <div className="relative w-full mx-auto max-w-screen-2xl px-6 sm:px-12 lg:px-20 py-24 lg:py-36 lg:flex lg:items-center lg:justify-between gap-36">
 
         {/* LEFT TEXT */}
         <div className="flex-1 text-center lg:text-left">
@@ -55,7 +58,7 @@ export default function Hero() {
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-indigo-400 opacity-75"></span>
               <span className="relative inline-flex rounded-full h-2 w-2 bg-indigo-400"></span>
             </span>
-            <span className="text-xs font-medium text-indigo-300 tracking-wide uppercase">Trusted by 500+ businesses</span>
+            <span className="text-xs font-medium text-indigo-300 tracking-wide uppercase">Trusted by 100+ businesses</span>
           </div>
 
           {/* HEADLINE */}
@@ -68,8 +71,7 @@ export default function Hero() {
           </h1>
 
           <p className="mt-6 text-base sm:text-lg text-gray-400 max-w-md mx-auto lg:mx-0 leading-relaxed">
-            Place your advertisement on screens across local businesses and reach over{" "}
-            <span className="text-white font-medium">2 million visitors</span> every month.
+            Place your advertisement on screens inside local businesses and reach your audience where they already shop, eat, and gather.
           </p>
 
           {/* CTA BUTTONS */}
@@ -84,38 +86,43 @@ export default function Hero() {
               </svg>
             </Link>
 
-            <Link
-              to="/about"
+            <button
+              type="button"
+              onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
               className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10 hover:border-white/20 transition-all duration-200"
             >
               Learn more
-            </Link>
+            </button>
           </div>
 
           {/* STATS ROW */}
-          <div className="mt-14 flex flex-wrap justify-center lg:justify-start gap-x-10 gap-y-4">
+          <div className="mt-14 flex flex-wrap justify-center lg:justify-start gap-y-4">
             {[
               { value: "2M+", label: "Monthly visitors" },
               { value: "20+", label: "Active screens" },
               { value: "10+", label: "Cities" },
-            ].map(({ value, label }) => (
-              <div key={label} className="text-center lg:text-left">
-                <p className="text-2xl font-bold text-white">{value}</p>
-                <p className="text-xs text-gray-500 mt-0.5 tracking-wide uppercase">{label}</p>
+            ].map(({ value, label }, i) => (
+              <div key={label} className="flex items-center">
+                {i > 0 && <div className="w-px h-8 bg-white/10 mx-8" />}
+                <div className="text-center lg:text-left">
+                  <p className="text-2xl font-bold text-white">{value}</p>
+                  <p className="text-xs text-gray-500 mt-0.5 tracking-wide uppercase">{label}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
 
         {/* RIGHT: CAROUSEL with glow */}
-        <div className="mt-16 lg:mt-0 flex-shrink-0 relative">
+        <div className="mt-16 lg:mt-0 relative flex-1 max-w-2xl">
           {/* Glow ring behind carousel */}
-          <div
+          {/* <div
             aria-hidden="true"
             className="absolute inset-0 -m-6 rounded-3xl bg-gradient-to-br from-indigo-500/20 via-violet-500/10 to-pink-500/20 blur-2xl pointer-events-none"
-          />
+          /> */}
           <div className="relative">
-            <Carousel />
+            {/* <Carousel /> */}
+            <LiveMap/>
           </div>
         </div>
 

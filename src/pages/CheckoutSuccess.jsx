@@ -8,41 +8,35 @@ export default function CheckoutSuccess() {
   const [status, setStatus] = useState("checking");
 
   useEffect(() => {
-    const checkSubscription = async () => {
+    let interval;
+    let attempts = 0;
+
+    const startPolling = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return navigate("/");
 
-      const sessionId = searchParams.get("session_id");
-      console.log("✅ session_id from URL:", sessionId);
-
-      let attempts = 0;
-
-      const interval = setInterval(async () => {
+      interval = setInterval(async () => {
         attempts++;
 
-        const { data, error } = await supabase
+        const { data } = await supabase
           .from("profiles")
           .select("subscription_status")
           .eq("id", user.id)
           .single();
 
-        console.log(`Attempt ${attempts}:`, data?.subscription_status, error);
-
         if (data?.subscription_status === "active") {
           clearInterval(interval);
           setStatus("success");
-        }
-
-        if (attempts > 10) {
+        } else if (attempts > 10) {
           clearInterval(interval);
           setStatus("delayed");
         }
       }, 1500);
-
-      return () => clearInterval(interval);
     };
 
-    checkSubscription();
+    startPolling();
+
+    return () => clearInterval(interval);
   }, []);
 
   return (

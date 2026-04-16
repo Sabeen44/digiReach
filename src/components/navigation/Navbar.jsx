@@ -23,7 +23,6 @@ export default function NavBar() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  if (sessionLoading) return null;
 
   return (
     <>

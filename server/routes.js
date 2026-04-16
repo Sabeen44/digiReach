@@ -9,11 +9,9 @@ import {
 
 const router = express.Router();
 
-console.log("CLIENT_URL:", process.env.CLIENT_URL);
 
 // ── Webhook ───────────────────────────────────────────────────────────────────
 router.post("/webhook", async (req, res) => {
-  console.log("✅ Webhook route hit");
   const sig = req.headers["stripe-signature"];
 
   let event;
@@ -28,33 +26,20 @@ router.post("/webhook", async (req, res) => {
     return res.status(400).send(`Webhook Error: ${err.message}`);
   }
 
-  console.log("🔔 Webhook event:", event.type);
-
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object;
       const customerId = session.customer;
 
-      console.log("Webhook metadata userId:", session.metadata?.userId);
-      console.log("Full session metadata:", session.metadata);
-
       const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
       const priceId = lineItems.data[0]?.price?.id;
       const locationCount = PLAN_LOCATIONS[priceId] ?? 0;
 
-      console.log("priceId:", priceId, "locationCount:", locationCount);
-
       let userId = session.metadata?.userId;
       if (!userId) userId = await findUserByCustomerId(customerId);
+      if (!userId) break;
 
-      if (!userId) {
-        console.error("❌ Could not find userId for session:", session.id);
-        break;
-      }
-
-      console.log("📝 Calling activateSubscription for userId:", userId);
       await activateSubscription({ userId, customerId, priceId, locationCount });
-      console.log("✅ activateSubscription complete");
       break;
     }
 
@@ -64,18 +49,43 @@ router.post("/webhook", async (req, res) => {
       break;
     }
 
-   case "customer.subscription.updated": {
-  const subscription = event.data.object;
-  const customerId = subscription.customer;
-  const newPriceId = subscription.items.data[0]?.price?.id;
+    case "customer.subscription.updated": {
+      const subscription = event.data.object;
+      const customerId = subscription.customer;
+      const newPriceId = subscription.items.data[0]?.price?.id;
+      const newLimit = PLAN_LOCATIONS[newPriceId] ?? 0;
 
-  await supabaseAdmin
-    .from("profiles")
-    .update({ plan_id: newPriceId })
-    .eq("stripe_customer_id", customerId);
+      // Update plan and clear any pending downgrade
+      await supabaseAdmin
+        .from("profiles")
+        .update({ plan_id: newPriceId, pending_plan_id: null, pending_plan_date: null })
+        .eq("stripe_customer_id", customerId);
 
-  break;
-}
+      // Enforce location limit — deactivate excess approved ads (oldest first)
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("id")
+        .eq("stripe_customer_id", customerId)
+        .single();
+
+      if (profile) {
+        const { data: ads } = await supabaseAdmin
+          .from("ads")
+          .select("id")
+          .eq("user_id", profile.id)
+          .eq("status", "approved")
+          .order("created_at", { ascending: true });
+
+        if (ads && ads.length > newLimit) {
+          const excessIds = ads.slice(0, ads.length - newLimit).map((a) => a.id);
+          await supabaseAdmin
+            .from("ads")
+            .update({ status: "inactive" })
+            .in("id", excessIds);
+        }
+      }
+      break;
+    }
   }
 
   res.json({ received: true });
@@ -83,7 +93,6 @@ router.post("/webhook", async (req, res) => {
 
 // ── Checkout ──────────────────────────────────────────────────────────────────
 router.post("/create-checkout-session", async (req, res) => {
-  console.log("✅ Checkout route hit, body:", req.body);
   const { priceId, userId } = req.body;
   try {
     const session = await stripe.checkout.sessions.create({
@@ -105,58 +114,41 @@ router.post("/create-checkout-session", async (req, res) => {
 router.post("/upgrade-plan", async (req, res) => {
   const { newPriceId, customerId } = req.body;
 
- console.log("upgrade-plan hit, customerId:", customerId);  // ← add
-  console.log("newPriceId:", newPriceId);                    // ← add
-
-
   try {
-    // Get existing subscription
     const subscriptions = await stripe.subscriptions.list({
       customer: customerId,
       status: "active",
       limit: 1,
     });
 
-     console.log("subscriptions found:", subscriptions.data.length); // ← add
-
     const subscription = subscriptions.data[0];
 
-    if (subscription) {
-
-      console.log("updating subscription:", subscription.id); // ← add
-      console.log("subscriptions found:", subscriptions.data.length);
-console.log("subscription object:", subscriptions.data[0]); // ← add
-console.log("subscription id:", subscriptions.data[0]?.id); // ← add
-console.log("subscriptions found:", subscriptions.data.length);
-console.log("full subscriptions:", JSON.stringify(subscriptions.data)); // ← add
-
-
-      // Update existing subscription — cancels old plan automatically
-      await stripe.subscriptions.update(subscription.id, {
-        items: [{
-          id: subscription.items.data[0].id,
-          price: newPriceId,
-        }],
-        proration_behavior: "create_prorations", // charges/credits difference
-      });
-
-      res.json({ success: true });
-    } else {
-      // No existing subscription — create new checkout
+    if (!subscription) {
+      // No active subscription — send to checkout instead
       const session = await stripe.checkout.sessions.create({
         mode: "subscription",
         customer: customerId,
         line_items: [{ price: newPriceId, quantity: 1 }],
         success_url: `${process.env.CLIENT_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.CLIENT_URL}/dashboard`,
-        metadata: { customerId },
       });
-      res.json({ url: session.url });
+      return res.json({ url: session.url });
     }
+
+    // ── Apply plan change immediately with proration (upgrade or downgrade) ──
+    await stripe.subscriptions.update(subscription.id, {
+      items: [{ id: subscription.items.data[0].id, price: newPriceId }],
+      proration_behavior: "create_prorations",
+    });
+    // Clear any previously scheduled downgrade
+    await supabaseAdmin
+      .from("profiles")
+      .update({ pending_plan_id: null, pending_plan_date: null })
+      .eq("stripe_customer_id", customerId);
+
+    res.json({ success: true });
   } catch (err) {
-    console.error("Stripe upgrade error:", err.message); // ← change to err.message
-  console.error("Full error:", err); // ← add
-    console.error("Stripe upgrade error:", err);
+    console.error("Stripe upgrade error:", err.message);
     res.status(500).json({ error: err.message });
   }
 });

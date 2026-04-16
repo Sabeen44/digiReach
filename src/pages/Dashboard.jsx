@@ -20,9 +20,11 @@ const blobClip = "polygon(74.1% 44.1%, 100% 61.6%, 97.5% 26.9%, 85.5% 0.1%, 80.7
 export default function Dashboard() {
   const navigate = useNavigate();
   const { session } = useAuth();
-  const { profile, loading, upgrading, portalLoading, handleUpgrade, handlePortal } = useDashboard(session);
+  const { profile, loading, upgrading, portalLoading, handleUpgrade, handlePortal } = useDashboard();
   const [selectedPlan, setSelectedPlan] = useState("");
   const [totalLocations, setTotalLocations] = useState(0);
+  const [hasAds, setHasAds] = useState(true); // optimistic — hide banner until we know
+  const [locationsKey, setLocationsKey] = useState(0);
 
   useEffect(() => {
     const fetchTotalLocations = async () => {
@@ -35,7 +37,19 @@ export default function Dashboard() {
     fetchTotalLocations();
   }, []);
 
-  if (loading) {
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const checkAds = async () => {
+      const { count } = await supabase
+        .from("ads")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", session.user.id);
+      setHasAds((count ?? 0) > 0);
+    };
+    checkAds();
+  }, [session?.user?.id]);
+
+if (loading) {
     return (
       <div className="relative min-h-screen bg-gray-950 flex items-center justify-center">
         <div aria-hidden="true" className="absolute inset-0 pointer-events-none" style={dotGrid} />
@@ -80,6 +94,35 @@ export default function Dashboard() {
           </h1>
         </div>
 
+{/* Setup nudge — shown when subscribed but no ads uploaded yet */}
+        {isActive && !hasAds && (
+          <div className="relative rounded-2xl border border-indigo-500/30 bg-indigo-500/[0.06] p-6 flex flex-col sm:flex-row sm:items-center gap-5 overflow-hidden">
+            <div
+              aria-hidden="true"
+              className="absolute inset-0 pointer-events-none rounded-2xl"
+              style={{ background: "radial-gradient(ellipse at 0% 50%, rgba(99,102,241,0.12), transparent 70%)" }}
+            />
+            <div className="relative shrink-0 w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center">
+              <svg className="w-6 h-6 text-indigo-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+              </svg>
+            </div>
+            <div className="relative flex-1 min-w-0">
+              <p className="text-sm font-semibold text-white">Finish setting up your account</p>
+              <p className="mt-0.5 text-xs text-gray-400">
+                You're subscribed but haven't uploaded your first ad yet. Choose your screen locations and go live.
+              </p>
+            </div>
+            <button
+              onClick={() => navigate("/upload-ad")}
+              className="relative shrink-0 rounded-xl bg-indigo-500 px-5 py-2.5 text-sm font-semibold text-white hover:bg-indigo-400 transition-all duration-200"
+              style={{ boxShadow: "0 4px 16px rgba(99,102,241,0.35)" }}
+            >
+              Upload your first ad →
+            </button>
+          </div>
+        )}
+
         <DashboardAccount session={session} />
 
         <DashboardSubscription
@@ -91,8 +134,8 @@ export default function Dashboard() {
 
       {isActive && (
   <DashboardMyLocations
+    key={locationsKey}
     userId={session.user.id}
-    locationCount={locationCount}
     locationLimit={locationLimit}
   />
 )}
@@ -107,6 +150,7 @@ export default function Dashboard() {
             handleUpgrade={handleUpgrade}
             handlePortal={handlePortal}
             totalLocations={totalLocations}
+            onPlanChanged={() => setLocationsKey((k) => k + 1)}
           />
         )}
 

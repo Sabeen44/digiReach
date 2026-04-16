@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
-import { PRICE_IDS, PLAN_LIST } from "../config/plans";
+import { PLAN_LIST } from "../config/plans";
 
 const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4242";
 
@@ -9,51 +9,6 @@ const dotGrid = {
   backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
   backgroundSize: "32px 32px",
 };
-
-const tiers = [
-  {
-    name: "Starter",
-    id: "starter",
-    price: "$10",
-    per: "per month",
-    description: "Perfect for small businesses getting started with digital signage.",
-    features: [
-      "1 screen location",
-      "Upload your own creatives",
-      "Real-time scheduling",
-      "Email support",
-    ],
-  },
-  {
-    name: "Growth",
-    id: "growth",
-    price: "$20",
-    per: "per month",
-    description: "Ideal for growing networks and multi-location setups.",
-    features: [
-      "Up to 5 screen locations",
-      "Upload your own creatives",
-      "Real-time scheduling",
-      "Analytics dashboard",
-      "Priority support",
-    ],
-    featured: true,
-  },
-  {
-    name: "Enterprise",
-    id: "enterprise",
-    price: "$30",
-    per: "per month",
-    description: "For large networks that need scale and flexibility.",
-    features: [
-      "10+ screen locations",
-      "Upload your own creatives",
-      "Real-time scheduling",
-      "Advanced analytics",
-      "Dedicated account manager",
-    ],
-  },
-];
 
 export default function Pricing() {
   const navigate = useNavigate();
@@ -78,26 +33,17 @@ export default function Pricing() {
   };
 
   const createCheckout = async (planId) => {
-    const priceMap = {
-      starter:    PRICE_IDS.starter,
-      growth:     PRICE_IDS.growth,
-      enterprise: PRICE_IDS.enterprise,
-    };
-
-    if (!priceMap[planId]) {
-      console.error("Invalid plan:", planId);
-      return;
-    }
+    const plan = PLAN_LIST.find((p) => p.id === planId);
+    if (!plan) return;
 
     try {
       const res = await fetch(`${apiBase}/create-checkout-session`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId: priceMap[planId], userId: session.user.id }),
+        body: JSON.stringify({ priceId: plan.priceId, userId: session.user.id }),
       });
       const data = await res.json();
       if (data.url) window.location.href = data.url;
-      else console.error("No checkout URL returned:", data);
     } catch (err) {
       console.error("Checkout error:", err);
     }
@@ -146,7 +92,7 @@ export default function Pricing() {
 
         {/* Pricing cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-          {tiers.map((tier) => (
+          {PLAN_LIST.map((tier) => (
             <div
               key={tier.id}
               className={`relative flex flex-col rounded-2xl p-8 transition-all duration-300 ${
@@ -226,7 +172,7 @@ export default function Pricing() {
 
         {/* Footer note */}
         <p className="mt-10 text-center text-sm text-gray-600">
-          All plans include a 7-day free trial. No credit card required to start.
+          No contracts. Cancel anytime.
         </p>
 
       </div>

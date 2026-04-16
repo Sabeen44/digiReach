@@ -8,7 +8,7 @@ import Contact from "./pages/Contact";
 import Signup from "./pages/Signup";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
-import ProtectedRoute from "./pages/ProtectedRoute";
+import ProtectedRoute, { SubscribedRoute } from "./pages/ProtectedRoute";
 import MarketingLayout from "./layouts/MarketingLayout";
 import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Privacy from "./pages/Privacy";
@@ -31,7 +31,14 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
-        <Route path="/onboarding" element={<Onboarding />} />
+        <Route
+          path="/onboarding"
+          element={
+            <SubscribedRoute>
+              <Onboarding />
+            </SubscribedRoute>
+          }
+        />
 
         <Route
           path="/dashboard"
@@ -43,11 +50,11 @@ export default function App() {
         />
 
         <Route
-          path="/upload-ad"                         // ← add this
+          path="/upload-ad"
           element={
-            <ProtectedRoute>
+            <SubscribedRoute>
               <UploadAd />
-            </ProtectedRoute>
+            </SubscribedRoute>
           }
         />
 

@@ -82,7 +82,7 @@ export default function Login() {
         </div>
 
         {/* Form */}
-        <div className="space-y-4">
+        <form onSubmit={handleLogin} className="space-y-4">
           <div>
             <label className="block text-xs font-medium text-gray-400 mb-1.5">Email</label>
             <input
@@ -119,7 +119,7 @@ export default function Login() {
 
           {/* Submit */}
           <button
-            onClick={handleLogin}
+            type="submit"
             disabled={loading}
             className="w-full inline-flex items-center justify-center gap-2 rounded-xl bg-indigo-500 px-6 py-3 text-sm font-semibold text-white hover:bg-indigo-400 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 mt-2"
             style={{ boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}
@@ -141,7 +141,7 @@ export default function Login() {
               </>
             )}
           </button>
-        </div>
+        </form>
 
         {/* Divider */}
         <div className="my-6 h-px bg-white/[0.06]" />

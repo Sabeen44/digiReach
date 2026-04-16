@@ -1,49 +1,87 @@
-
-
-import { createContext, useContext, useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback, useRef } from "react";
 import { supabase } from "../lib/supabaseClient";
 
 const AuthContext = createContext();
 
 export function AuthProvider({ children }) {
-  const [session, setSession] = useState(undefined);
-  const [hasSubscription, setHasSubscription] = useState(false);
+  const [session, setSession]               = useState(undefined);
+  const [profile, setProfile]               = useState(null);
   const [sessionLoading, setSessionLoading] = useState(true);
+  const activeUserIdRef                     = useRef(null);
 
-  // Load session + listen for changes
-  useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setSessionLoading(false);
-    });
+  const fetchProfile = useCallback(async (userId) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("subscription_status, plan_id, stripe_customer_id")
+      .eq("id", userId)
+      .single();
 
-    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      setSessionLoading(false);
-    });
+    // Bail if the user logged out (or a different user logged in) while we were fetching
+    if (activeUserIdRef.current !== userId || !data) return;
 
-    return () => listener.subscription.unsubscribe();
+    const { count } = await supabase
+      .from("ads")
+      .select("store_location_id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("status", "approved");
+
+    if (activeUserIdRef.current !== userId) return;
+
+    setProfile({ ...data, location_count: count ?? 0 });
   }, []);
 
-  // Fetch subscription status
   useEffect(() => {
-    if (!session) return;
+    // Resolve session immediately — don't block on profile
+    supabase.auth.getSession().then(({ data }) => {
+      const s = data.session;
+      activeUserIdRef.current = s?.user.id ?? null;
+      setSession(s);
+      setSessionLoading(false);
+      if (s) fetchProfile(s.user.id);
+    });
 
-    async function fetchSubscriptionStatus() {
-      const { data } = await supabase
-        .from("profiles")
-        .select("subscription_status")
-        .eq("id", session.user.id)
-        .single();
+    // Subsequent auth changes (login / logout)
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, s) => {
+      activeUserIdRef.current = s?.user.id ?? null;
+      setSession(s);
+      if (!s) {
+        setProfile(null);
+      } else {
+        fetchProfile(s.user.id);
+      }
+    });
 
-      setHasSubscription(data?.subscription_status === "active");
-    }
+    // Realtime profile updates (plan change, subscription status, etc.)
+    const channel = supabase
+      .channel("auth-profile")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "profiles" },
+        (payload) => {
+          // Only refresh if it belongs to the current user
+          supabase.auth.getSession().then(({ data }) => {
+            if (data.session?.user.id === payload.new.id) {
+              fetchProfile(payload.new.id);
+            }
+          });
+        }
+      )
+      .subscribe();
 
-    fetchSubscriptionStatus();
-  }, [session]);
+    return () => {
+      listener.subscription.unsubscribe();
+      supabase.removeChannel(channel);
+    };
+  }, [fetchProfile]);
+
+  const hasSubscription = profile?.subscription_status === "active";
+
+  const refreshProfile = useCallback(() => {
+    if (activeUserIdRef.current) fetchProfile(activeUserIdRef.current);
+  }, [fetchProfile]);
 
   return (
-    <AuthContext.Provider value={{ session, sessionLoading, hasSubscription }}>
+    <AuthContext.Provider value={{ session, sessionLoading, profile, hasSubscription, refreshProfile }}>
       {children}
     </AuthContext.Provider>
   );

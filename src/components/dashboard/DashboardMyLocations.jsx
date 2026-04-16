@@ -14,6 +14,7 @@ export default function DashboardMyLocations({ userId, locationLimit }) {
         .from("ads")
         .select("*, store_locations(store_name, city)")
         .eq("user_id", userId)
+        .neq("status", "inactive")
         .order("created_at", { ascending: false });
 
       if (adsData) setAds(adsData);
@@ -31,52 +32,32 @@ export default function DashboardMyLocations({ userId, locationLimit }) {
     fetchData();
   }, [userId]);
 
- const handleAddLocation = async (locationId) => {
-  setAdding(true);
-  
-  try {
-    const latestAd = ads[0];
-    console.log("latestAd:", latestAd);
+  const handleAddLocation = async (locationId) => {
+    setAdding(true);
+    try {
+      const latestAd = ads[0];
+      if (!latestAd) return;
 
-    if (!latestAd) {
-      console.log("no latestAd found");
+      const { error } = await supabase.from("ads").insert({
+        user_id: userId,
+        store_location_id: locationId,
+        file_url: latestAd.file_url,
+        file_type: latestAd.file_type,
+      });
+
+      if (!error) {
+        const { data } = await supabase
+          .from("ads")
+          .select("*, store_locations(store_name, city)")
+          .eq("user_id", userId)
+          .order("created_at", { ascending: false });
+        if (data) setAds(data);
+        setShowPicker(false);
+      }
+    } finally {
       setAdding(false);
-      return;
     }
-
-    console.log("about to insert"); // ← add
-
-    const { data: insertData, error } = await supabase.from("ads").insert({
-      user_id: userId,
-      store_location_id: locationId,
-      file_url: latestAd.file_url,
-      file_type: latestAd.file_type,
-    });
-
-    console.log("insert error:", error);
-    console.log("insert data:", insertData);
-
-    if (!error) {
-       console.log("insert successful, refreshing ads..."); // ← add
-      const { data } = await supabase
-        .from("ads")
-        .select("*, store_locations(store_name, city)")
-        .eq("user_id", userId)
-        .order("created_at", { ascending: false });
-
-         console.log("refreshed ads:", data);        // ← add
- 
-
-
-      if (data) setAds(data);
-      setShowPicker(false);
-    }
-  } catch (err) {
-    console.error("handleAddLocation error:", err); // ← catch any thrown errors
-  } finally {
-    setAdding(false);
-  }
-};
+  };
 
   const statusStyles = {
     pending:  "bg-yellow-500/15 text-yellow-400",

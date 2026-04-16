@@ -16,13 +16,24 @@ export default function AdminAdCard({ ad, filter, onApprove, onReject, onDelete 
 
       {/* Info */}
       <div className="flex-1 min-w-0 space-y-1">
-        <p className="text-sm font-medium text-gray-800">
-          {ad.store_locations?.store_name} — {ad.store_locations?.city}
+        <p className="text-xs font-mono text-gray-400 truncate">
+          User: {ad.user_id}
         </p>
         <p className="text-xs text-gray-400">
           Uploaded {new Date(ad.created_at).toLocaleDateString()}
         </p>
-        <p className="text-xs text-gray-300 truncate">{ad.file_url}</p>
+        {ad._locations?.length > 0 && (
+          <div className="flex flex-wrap gap-1 pt-0.5">
+            {ad._locations.map((loc) => (
+              <span
+                key={loc}
+                className="inline-block rounded-md bg-indigo-50 border border-indigo-100 px-2 py-0.5 text-xs text-indigo-500"
+              >
+                {loc}
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Reject reason input */}
         {showRejectInput && (
@@ -35,7 +46,7 @@ export default function AdminAdCard({ ad, filter, onApprove, onReject, onDelete 
               className="flex-1 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-xs text-gray-700 placeholder-gray-300 focus:outline-none focus:border-red-300 focus:ring-1 focus:ring-red-100"
             />
             <button
-              onClick={() => { onReject(ad.id, reason); setShowRejectInput(false); }}
+              onClick={() => { onReject(ad, reason); setShowRejectInput(false); }}
               className="rounded-lg bg-red-50 border border-red-200 text-red-500 px-3 py-1.5 text-xs font-semibold hover:bg-red-100 transition-all"
             >
               Confirm
@@ -55,7 +66,7 @@ export default function AdminAdCard({ ad, filter, onApprove, onReject, onDelete 
         {filter === "pending" && (
           <>
             <button
-              onClick={() => onApprove(ad.id)}
+              onClick={() => onApprove(ad)}
               className="rounded-lg bg-green-50 border border-green-200 text-green-600 px-4 py-1.5 text-xs font-semibold hover:bg-green-100 transition-all"
             >
               Approve

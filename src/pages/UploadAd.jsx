@@ -67,9 +67,11 @@ export default function UploadAd() {
     setUploading(true);
 
     try {
+      const { data: { user } } = await supabase.auth.getUser();
+
       const fileExt = file.name.split(".").pop();
       const fileName = `${crypto.randomUUID()}.${fileExt}`;
-      const filePath = `${selectedLocations[0]}/${fileName}`;
+      const filePath = `${user.id}/${fileName}`;
 
       const { error: uploadError } = await supabase.storage
         .from("ads")
@@ -78,8 +80,6 @@ export default function UploadAd() {
 
       const { data: urlData } = supabase.storage.from("ads").getPublicUrl(filePath);
       const fileUrl = urlData.publicUrl;
-
-      const { data: { user } } = await supabase.auth.getUser();
 
       const inserts = selectedLocations.map((locationId) => ({
         user_id: user.id,

@@ -6,3 +6,10 @@ export const PLAN_LOCATIONS = {
   "price_1T6bd1RQXSCaZY9hys0f1mH9": 5,   // Growth
   "price_1T6bdWRQXSCaZY9hc63mn7aw": 10,  // Enterprise
 };
+
+// Monthly price in cents — used to detect upgrade vs downgrade
+export const PLAN_AMOUNTS = {
+  "price_1T6bbyRQXSCaZY9hN9GPW82Y": 1000,  // Starter    $10
+  "price_1T6bd1RQXSCaZY9hys0f1mH9": 2000,  // Growth     $20
+  "price_1T6bdWRQXSCaZY9hc63mn7aw": 3000,  // Enterprise $30
+};

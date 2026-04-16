@@ -17,7 +17,49 @@ export const PLAN_LOCATION_LIMITS = {
 };
 
 export const PLAN_LIST = [
-  { label: "Starter",    price: "$10/mo",  locations: "1 location",   id: PRICE_IDS.starter },
-  { label: "Growth",     price: "$20/mo",  locations: "5 locations",  id: PRICE_IDS.growth },
-  { label: "Enterprise", price: "$30/mo",  locations: "All locations", id: PRICE_IDS.enterprise },
+  {
+    id:          "starter",
+    priceId:     PRICE_IDS.starter,
+    name:        "Starter",
+    price:       "$10",
+    per:         "per month",
+    description: "Perfect for small businesses getting started with digital signage.",
+    features: [
+      "1 screen location",
+      "Upload your own creatives",
+      "Real-time scheduling",
+      "Email support",
+    ],
+  },
+  {
+    id:          "growth",
+    priceId:     PRICE_IDS.growth,
+    name:        "Growth",
+    price:       "$20",
+    per:         "per month",
+    description: "Ideal for growing networks and multi-location setups.",
+    features: [
+      "Up to 5 screen locations",
+      "Upload your own creatives",
+      "Real-time scheduling",
+      "Analytics dashboard",
+      "Priority support",
+    ],
+    featured: true,
+  },
+  {
+    id:          "enterprise",
+    priceId:     PRICE_IDS.enterprise,
+    name:        "Enterprise",
+    price:       "$30",
+    per:         "per month",
+    description: "For large networks that need scale and flexibility.",
+    features: [
+      "10+ screen locations",
+      "Upload your own creatives",
+      "Real-time scheduling",
+      "Advanced analytics",
+      "Dedicated account manager",
+    ],
+  },
 ];

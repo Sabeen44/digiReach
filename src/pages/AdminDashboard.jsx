@@ -42,28 +42,51 @@ export default function AdminDashboard() {
           .select("*, store_locations(store_name, city)")
           .eq("status", filter)
           .order("created_at", { ascending: false });
-        if (data) setAds(data);
+        if (data) {
+          // Deduplicate: one card per user+file upload batch
+          const seen = new Set();
+          const unique = data.filter((ad) => {
+            const key = `${ad.user_id}__${ad.file_url}`;
+            if (seen.has(key)) return false;
+            seen.add(key);
+            // Attach all location names for this batch
+            ad._locations = data
+              .filter((a) => a.user_id === ad.user_id && a.file_url === ad.file_url)
+              .map((a) => `${a.store_locations?.store_name}, ${a.store_locations?.city}`)
+              .filter(Boolean);
+            return true;
+          });
+          setAds(unique);
+        }
       }
       setLoading(false);
     };
     fetchData();
   }, [filter, isAdmin]);
 
-  const handleApprove = async (id) => {
-    await supabase.from("ads").update({ status: "approved" }).eq("id", id);
-    setAds((prev) => prev.filter((ad) => ad.id !== id));
+  const handleApprove = async (ad) => {
+    await supabase
+      .from("ads")
+      .update({ status: "approved" })
+      .eq("user_id", ad.user_id)
+      .eq("file_url", ad.file_url);
+    setAds((prev) => prev.filter((a) => !(a.user_id === ad.user_id && a.file_url === ad.file_url)));
   };
 
-  const handleReject = async (id, reason = "") => {
-    await supabase.from("ads").update({ status: "rejected", rejection_reason: reason }).eq("id", id);
-    setAds((prev) => prev.filter((ad) => ad.id !== id));
+  const handleReject = async (ad, reason = "") => {
+    await supabase
+      .from("ads")
+      .update({ status: "rejected", rejection_reason: reason })
+      .eq("user_id", ad.user_id)
+      .eq("file_url", ad.file_url);
+    setAds((prev) => prev.filter((a) => !(a.user_id === ad.user_id && a.file_url === ad.file_url)));
   };
 
   const handleDelete = async (ad) => {
     const filePath = ad.file_url.split("/object/public/ads/")[1];
     await supabase.storage.from("ads").remove([filePath]);
-    await supabase.from("ads").delete().eq("id", ad.id);
-    setAds((prev) => prev.filter((a) => a.id !== ad.id));
+    await supabase.from("ads").delete().eq("user_id", ad.user_id).eq("file_url", ad.file_url);
+    setAds((prev) => prev.filter((a) => !(a.user_id === ad.user_id && a.file_url === ad.file_url)));
   };
 
   const filters = ["pending", "approved", "rejected", "users"];

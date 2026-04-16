@@ -87,6 +87,8 @@ export default function ScreensShowcase({ screens = defaultScreens }) {
     return () => clearInterval(timerRef.current);
   }, [startTimer]);
 
+  const pauseTimer = useCallback(() => clearInterval(timerRef.current), []);
+
   const hasInteracted = useRef(false);
   
   useEffect(() => {
@@ -96,6 +98,22 @@ export default function ScreensShowcase({ screens = defaultScreens }) {
       thumb.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
     }
   }, [current]);
+
+  useEffect(() => {
+    const onKey = (e) => {
+      if (e.key === "ArrowLeft") {
+        clearInterval(timerRef.current);
+        goTo((current - 1 + screens.length) % screens.length);
+        startTimer();
+      } else if (e.key === "ArrowRight") {
+        clearInterval(timerRef.current);
+        goTo((current + 1) % screens.length);
+        startTimer();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [current, goTo, startTimer, screens.length]);
 
   const handleThumbClick = (idx) => {
     clearInterval(timerRef.current);
@@ -171,7 +189,11 @@ export default function ScreensShowcase({ screens = defaultScreens }) {
         </div>
 
         {/* HERO IMAGE */}
-        <div className="relative max-w-2xl mx-auto mb-3">
+        <div
+          className="relative max-w-2xl mx-auto mb-3"
+          onMouseEnter={pauseTimer}
+          onMouseLeave={startTimer}
+        >
 
           {/* Glow ring behind image */}
           <div
@@ -188,6 +210,28 @@ export default function ScreensShowcase({ screens = defaultScreens }) {
                 fading ? "opacity-0" : "opacity-100"
               }`}
             />
+
+            {/* Prev / Next arrow buttons */}
+            <button
+              type="button"
+              aria-label="Previous screen"
+              onClick={() => handleThumbClick((current - 1 + screens.length) % screens.length)}
+              className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-950/70 border border-white/10 flex items-center justify-center text-white hover:bg-gray-950/90 transition backdrop-blur-sm"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              aria-label="Next screen"
+              onClick={() => handleThumbClick((current + 1) % screens.length)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-gray-950/70 border border-white/10 flex items-center justify-center text-white hover:bg-gray-950/90 transition backdrop-blur-sm"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
           </div>
 
           {/* Image label badge */}
@@ -235,11 +279,13 @@ export default function ScreensShowcase({ screens = defaultScreens }) {
         </div>
 
       
-        {/* <p className="text-center mt-3.5 text-xs text-gray-500 tracking-wide">
+        <p className="text-center mt-3.5 text-xs text-gray-500 tracking-wide">
           <span className="text-indigo-400 font-semibold">{current + 1}</span>
           {" / "}
           {screens.length} locations
         </p>
+
+        {/* Commented-out stats block kept for future use:
 
         <div className="mt-14 flex flex-wrap justify-center items-center gap-y-4">
           {stats.map(({ value, label }, i) => (
