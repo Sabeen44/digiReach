@@ -26,7 +26,7 @@ export function useDashboard() {
       if (data.url) {
         data.url.startsWith("http") ? (window.location.href = data.url) : navigate(data.url);
       } else if (data.success) {
-        refreshProfile();
+        await refreshProfile();
         onSuccess?.();
       }
     } catch (err) {

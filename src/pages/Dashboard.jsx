@@ -8,6 +8,7 @@ import DashboardAccount from "../components/dashboard/DashboardAccount";
 import DashboardSubscription from "../components/dashboard/DashboardSubscription";
 import DashboardChangePlan from "../components/dashboard/DashboardChangePlan";
 import DashboardMyLocations from "../components/dashboard/DashboardMyLocations";
+import DashboardMyAd from "../components/dashboard/DashboardMyAd";
 
 
 const dotGrid = {
@@ -133,10 +134,14 @@ if (loading) {
 
 
       {isActive && (
+        <DashboardMyAd userId={session.user.id} />
+      )}
+
+      {isActive && (
   <DashboardMyLocations
-    key={locationsKey}
     userId={session.user.id}
     locationLimit={locationLimit}
+    refreshTrigger={locationsKey}
   />
 )}
 

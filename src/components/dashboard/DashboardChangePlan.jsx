@@ -17,9 +17,9 @@ export default function DashboardChangePlan({
   onPlanChanged,
 }) {
   const { session } = useAuth();
-  const [confirm, setConfirm]           = useState(null);
-  const [selectedLocIds, setSelectedLocIds] = useState([]); // location IDs user wants to keep
-  const [loadingAds, setLoadingAds]     = useState(false);
+  const [confirm, setConfirm]               = useState(null);
+  const [selectedLocIds, setSelectedLocIds] = useState([]);
+  const [loadingAds, setLoadingAds]         = useState(false);
 
   const getLocationsLabel = (priceId) => {
     const limit = PLAN_LOCATION_LIMITS[priceId];
@@ -34,80 +34,69 @@ export default function DashboardChangePlan({
     const newIdx     = PLAN_ORDER.indexOf(selectedPlan);
     const isUpgrade  = newIdx > currentIdx;
     const newPlan    = PLAN_LIST.find((p) => p.priceId === selectedPlan);
+    const newLimit   = PLAN_LOCATION_LIMITS[selectedPlan];
 
-    if (isUpgrade) {
-      setConfirm({ type: "upgrade", newPlan });
-    } else {
-      setLoadingAds(true);
+    setLoadingAds(true);
+    const [{ data: allLocs }, { data: activeAds }] = await Promise.all([
+      supabase
+        .from("store_locations")
+        .select("*")
+        .eq("active", true)
+        .order("store_name", { ascending: true }),
+      supabase
+        .from("ads")
+        .select("id, store_location_id, file_url, file_type, status")
+        .eq("user_id", session.user.id)
+        .neq("status", "inactive"),
+    ]);
+    setLoadingAds(false);
 
-      // Fetch all active store locations + user's approved ads (for file info + pre-selection)
-      const [{ data: allLocs }, { data: approvedAds }] = await Promise.all([
-        supabase
-          .from("store_locations")
-          .select("*")
-          .eq("active", true)
-          .order("store_name", { ascending: true }),
-        supabase
-          .from("ads")
-          .select("id, store_location_id, file_url, file_type")
-          .eq("user_id", session.user.id)
-          .eq("status", "approved"),
-      ]);
-
-      setLoadingAds(false);
-
-      const newLimit   = PLAN_LOCATION_LIMITS[selectedPlan];
-      const existingByLocId = Object.fromEntries(
-        (approvedAds ?? []).map((a) => [a.store_location_id, a])
-      );
-      const existingLocIds = Object.keys(existingByLocId);
-      // Pre-select the user's most recent locations (up to newLimit)
-      const preSelected = existingLocIds.slice(-newLimit);
-
-      setSelectedLocIds(preSelected);
-      setConfirm({
-        type: "downgrade",
-        newPlan,
-        newLimit,
-        allLocations: allLocs ?? [],
-        existingByLocId,              // locId → approved ad (for re-activation or file reuse)
-        latestAd: (approvedAds ?? [])[0] ?? null,
-      });
-    }
+    const existingByLocId = Object.fromEntries(
+      (activeAds ?? []).map((a) => [a.store_location_id, a])
+    );
+    setSelectedLocIds([]);
+    setConfirm({
+      type: isUpgrade ? "upgrade" : "downgrade",
+      newPlan,
+      newLimit,
+      allLocations: allLocs ?? [],
+      existingByLocId,
+      allActiveIds: (activeAds ?? []).map((a) => a.id), // full list, not deduplicated
+      latestAd: (activeAds ?? [])[0] ?? null,
+    });
   };
 
   const handleConfirm = async () => {
-    if (confirm.type === "downgrade") {
-      const { existingByLocId, latestAd } = confirm;
-      const allApprovedIds = Object.values(existingByLocId).map((a) => a.id);
+    const { existingByLocId, allActiveIds, latestAd } = confirm;
 
-      // 1. Deactivate all currently approved ads
-      if (allApprovedIds.length > 0) {
-        await supabase.from("ads").update({ status: "inactive" }).in("id", allApprovedIds);
-      }
-
-      // 2. For each chosen location: re-activate existing ad OR insert new one
-      for (const locId of selectedLocIds) {
-        const existing = existingByLocId[locId];
-        if (existing) {
-          await supabase.from("ads").update({ status: "approved" }).eq("id", existing.id);
-        } else if (latestAd) {
-          await supabase.from("ads").insert({
-            user_id: session.user.id,
-            store_location_id: locId,
-            file_url: latestAd.file_url,
-            file_type: latestAd.file_type,
-            status: "pending",
-          });
-        }
-      }
-
-      onPlanChanged();
+    // Deactivate every current non-inactive ad (full list, no dedup)
+    if (allActiveIds.length > 0) {
+      await supabase.from("ads").update({ status: "inactive" }).in("id", allActiveIds);
     }
 
+    // Re-activate or insert each chosen location
+    for (const locId of selectedLocIds) {
+      const existing = existingByLocId[locId];
+      if (existing) {
+        await supabase.from("ads").update({ status: existing.status }).eq("id", existing.id);
+      } else if (latestAd) {
+        await supabase.from("ads").insert({
+          user_id: session.user.id,
+          store_location_id: locId,
+          file_url: latestAd.file_url,
+          file_type: latestAd.file_type,
+          status: "pending",
+        });
+      }
+    }
+
+    onPlanChanged();
     setConfirm(null);
-    handleUpgrade(selectedPlan);
+    handleUpgrade(selectedPlan, onPlanChanged);
   };
+
+  const isInfiniteLimit = confirm?.newLimit === Infinity;
+  const atLimit = !isInfiniteLimit && selectedLocIds.length >= confirm?.newLimit;
 
   return (
     <>
@@ -188,68 +177,63 @@ export default function DashboardChangePlan({
               </div>
               <div>
                 <h3 className="text-base font-bold text-white">
-                  {confirm.type === "upgrade" ? `Upgrade to ${confirm.newPlan.name}` : `Downgrade to ${confirm.newPlan.name}`}
+                  {confirm.type === "upgrade"
+                    ? `Upgrade to ${confirm.newPlan.name}`
+                    : `Downgrade to ${confirm.newPlan.name}`}
                 </h3>
                 <p className="mt-1 text-xs text-gray-400">
-                  Your new plan applies immediately. You'll receive a prorated credit or charge for the remainder of your billing cycle.
+                  Choose your store locations for the {confirm.newPlan.name} plan.
+                  {!isInfiniteLimit && ` You can select up to ${confirm.newLimit}.`}
                 </p>
               </div>
             </div>
 
-            {/* Downgrade — pick from ALL available locations */}
-            {confirm.type === "downgrade" && (
-              <div className="space-y-3">
-                <p className="text-xs font-medium text-yellow-400">
-                  Choose up to {confirm.newLimit} location{confirm.newLimit !== 1 ? "s" : ""} for your {confirm.newPlan.name} plan.
-                </p>
+            {/* Location picker */}
+            {confirm.allLocations.length === 0 ? (
+              <p className="text-xs text-gray-500">No locations available.</p>
+            ) : (
+              <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
+                {confirm.allLocations.map((loc) => {
+                  const checked  = selectedLocIds.includes(loc.id);
+                  const disabled = !checked && atLimit;
 
-                {confirm.allLocations.length === 0 ? (
-                  <p className="text-xs text-gray-500">No locations available.</p>
-                ) : (
-                  <div className="space-y-2 max-h-52 overflow-y-auto pr-1">
-                    {confirm.allLocations.map((loc) => {
-                      const checked  = selectedLocIds.includes(loc.id);
-                      const disabled = !checked && selectedLocIds.length >= confirm.newLimit;
-                      return (
-                        <label
-                          key={loc.id}
-                          className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition-all ${
-                            checked
-                              ? "border-indigo-500/50 bg-indigo-500/10 cursor-pointer"
-                              : disabled
-                              ? "border-white/[0.04] bg-white/[0.01] opacity-40 cursor-not-allowed"
-                              : "border-white/[0.08] hover:border-white/20 cursor-pointer"
-                          }`}
-                        >
-                          <input
-                            type="checkbox"
-                            checked={checked}
-                            disabled={disabled}
-                            onChange={() =>
-                              setSelectedLocIds((prev) =>
-                                prev.includes(loc.id)
-                                  ? prev.filter((id) => id !== loc.id)
-                                  : [...prev, loc.id]
-                              )
-                            }
-                            className="accent-indigo-500"
-                          />
-                          <div className="flex-1">
-                            <p className="text-sm text-white">{loc.store_name}</p>
-                            <p className="text-xs text-gray-500">{loc.city}</p>
-                          </div>
-                          {confirm.existingByLocId[loc.id] && (
-                            <span className="text-xs text-green-400 shrink-0">Current</span>
-                          )}
-                        </label>
-                      );
-                    })}
-                  </div>
-                )}
-
-                <p className="text-xs text-gray-600">{selectedLocIds.length} / {confirm.newLimit} selected</p>
+                  return (
+                    <label
+                      key={loc.id}
+                      className={`flex items-center gap-3 rounded-xl border px-4 py-3 transition-all ${
+                        checked
+                          ? "border-indigo-500/50 bg-indigo-500/10 cursor-pointer"
+                          : disabled
+                          ? "border-white/[0.04] bg-white/[0.01] opacity-40 cursor-not-allowed"
+                          : "border-white/[0.08] hover:border-white/20 cursor-pointer"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={disabled}
+                        onChange={() =>
+                          setSelectedLocIds((prev) =>
+                            prev.includes(loc.id)
+                              ? prev.filter((id) => id !== loc.id)
+                              : [...prev, loc.id]
+                          )
+                        }
+                        className="accent-indigo-500"
+                      />
+                      <div className="flex-1">
+                        <p className="text-sm text-white">{loc.store_name}</p>
+                        <p className="text-xs text-gray-500">{loc.city}</p>
+                      </div>
+                    </label>
+                  );
+                })}
               </div>
             )}
+
+            <p className="text-xs text-gray-600">
+              {selectedLocIds.length}{isInfiniteLimit ? "" : ` / ${confirm.newLimit}`} selected
+            </p>
 
             {/* Actions */}
             <div className="flex gap-3 pt-1">

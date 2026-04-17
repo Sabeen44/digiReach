@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../../lib/supabaseClient";
 
-export default function DashboardMyLocations({ userId, locationLimit }) {
+export default function DashboardMyLocations({ userId, locationLimit, refreshTrigger }) {
   const [ads, setAds] = useState([]);
   const [availableLocations, setAvailableLocations] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -10,27 +10,28 @@ export default function DashboardMyLocations({ userId, locationLimit }) {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data: adsData } = await supabase
-        .from("ads")
-        .select("*, store_locations(store_name, city)")
-        .eq("user_id", userId)
-        .neq("status", "inactive")
-        .order("created_at", { ascending: false });
+      setLoading(true);
+      const [{ data: adsData }, { data: locsData }] = await Promise.all([
+        supabase
+          .from("ads")
+          .select("*, store_locations(store_name, city)")
+          .eq("user_id", userId)
+          .neq("status", "inactive")
+          .order("created_at", { ascending: false }),
+        supabase
+          .from("store_locations")
+          .select("*")
+          .eq("active", true)
+          .order("store_name", { ascending: true }),
+      ]);
 
       if (adsData) setAds(adsData);
-
-      const { data: locsData } = await supabase
-        .from("store_locations")
-        .select("*")
-        .eq("active", true)
-        .order("store_name", { ascending: true });
-
       if (locsData) setAvailableLocations(locsData);
       setLoading(false);
     };
 
     fetchData();
-  }, [userId]);
+  }, [userId, refreshTrigger]);
 
   const handleAddLocation = async (locationId) => {
     setAdding(true);
@@ -66,18 +67,13 @@ export default function DashboardMyLocations({ userId, locationLimit }) {
   };
 
   // ── Derived — must come after state, before return ────────────────────────
-  const uniqueAds = ads.filter(
-    (ad, index, self) =>
-      index === self.findIndex((a) => a.store_location_id === ad.store_location_id)
-  );
-
-  const usedLocationIds = uniqueAds.map((ad) => ad.store_location_id);
+  const usedLocationIds = ads.map((ad) => ad.store_location_id);
 
   const remainingLocations = availableLocations.filter(
     (loc) => !usedLocationIds.includes(loc.id)
   );
 
-  const hasRemainingLocations = uniqueAds.length < locationLimit;
+  const hasRemainingLocations = ads.length < locationLimit;
 
   return (
     <div className="rounded-2xl bg-white/[0.03] border border-white/[0.08] p-6">
@@ -125,13 +121,13 @@ export default function DashboardMyLocations({ userId, locationLimit }) {
 
       {loading && <p className="text-sm text-gray-500">Loading…</p>}
 
-      {!loading && uniqueAds.length === 0 && (
+      {!loading && ads.length === 0 && (
         <p className="text-sm text-gray-500">No locations yet.</p>
       )}
 
-      {!loading && uniqueAds.length > 0 && (
+      {!loading && ads.length > 0 && (
         <div className="space-y-3">
-          {uniqueAds.map((ad) => (
+          {ads.map((ad) => (
             <div key={ad.id} className="flex items-center gap-4 rounded-xl border border-white/[0.06] bg-white/[0.02] px-4 py-3">
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-white truncate">

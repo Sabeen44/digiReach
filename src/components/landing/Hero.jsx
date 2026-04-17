@@ -86,13 +86,12 @@ export default function Hero() {
               </svg>
             </Link>
 
-            <button
-              type="button"
-              onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
+            <Link
+              to="/about"
               className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10 hover:border-white/20 transition-all duration-200"
             >
               Learn more
-            </button>
+            </Link>
           </div>
 
           {/* STATS ROW */}

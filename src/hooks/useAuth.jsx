@@ -77,7 +77,7 @@ export function AuthProvider({ children }) {
   const hasSubscription = profile?.subscription_status === "active";
 
   const refreshProfile = useCallback(() => {
-    if (activeUserIdRef.current) fetchProfile(activeUserIdRef.current);
+    if (activeUserIdRef.current) return fetchProfile(activeUserIdRef.current);
   }, [fetchProfile]);
 
   return (

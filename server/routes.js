@@ -140,10 +140,11 @@ router.post("/upgrade-plan", async (req, res) => {
       items: [{ id: subscription.items.data[0].id, price: newPriceId }],
       proration_behavior: "create_prorations",
     });
-    // Clear any previously scheduled downgrade
+    // Update plan_id immediately so the frontend sees it on the next profile fetch,
+    // without waiting for the webhook to fire.
     await supabaseAdmin
       .from("profiles")
-      .update({ pending_plan_id: null, pending_plan_date: null })
+      .update({ plan_id: newPriceId, pending_plan_id: null, pending_plan_date: null })
       .eq("stripe_customer_id", customerId);
 
     res.json({ success: true });

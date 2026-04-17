@@ -1,16 +1,16 @@
 const testimonials = [
   {
     name: "Sarah M.",
-    role: "Café owner, Denver",
+    role: "Dentist",
     quote:
-      "We added a screen in our waiting area and foot traffic went up noticeably within a month. The setup was painless and the passive income is a bonus.",
+      "We placed an ad on the digital screen and got noticably more calls. The setup was painless.",
     stars: 5,
     avatarFrom: "from-pink-500/40",
     avatarTo: "to-rose-500/20",
   },
   {
     name: "Daniel R.",
-    role: "Marketing lead, local retailer",
+    role: "Realtor",
     quote:
       "The local targeting is unlike anything digital can offer. People see our ad while they're already out shopping — the conversion rate has been excellent.",
     stars: 5,
