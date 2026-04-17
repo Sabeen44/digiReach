@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
-import LiveMap from "../components/landing/Livemap";
+import LiveMap from "../components/landing/LiveMap";
 
 const dotGrid = {
   backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",
