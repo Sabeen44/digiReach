@@ -14,7 +14,8 @@ import CheckoutSuccess from "./pages/CheckoutSuccess";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Onboarding from "./pages/Onboarding";
-import UploadAd from "./pages/UploadAd";           // ← add this
+import UploadAd from "./pages/UploadAd";
+import ResetPassword from "./pages/ResetPassword";
 import AdminDashboard from "./pages/AdminDashboard";
 
 
@@ -31,6 +32,7 @@ export default function App() {
         <Route path="/signup" element={<Signup />} />
         <Route path="/privacy" element={<Privacy />} />
         <Route path="/terms" element={<Terms />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route
           path="/onboarding"
           element={
