@@ -5,7 +5,9 @@ import router from "./routes.js";
 const app = express();
 
 // ── Standard middleware ───────────────────────────────────────────────────────
-app.use(cors());
+app.use(cors({
+  origin: process.env.CLIENT_URL,
+}));
 
 // ── Webhook needs raw body before express.json() ─────────────────────────────
 app.use("/webhook", express.raw({ type: "application/json" }));
