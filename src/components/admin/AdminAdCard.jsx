@@ -11,7 +11,7 @@ export default function AdminAdCard({ ad, filter, onApprove, onReject, onDelete 
       {ad.file_type?.startsWith("video") ? (
         <video src={ad.file_url} className="w-32 h-20 object-cover rounded-lg shrink-0" />
       ) : (
-        <img src={ad.file_url} alt="Ad" className="w-32 h-20 object-cover rounded-lg shrink-0" />
+        <img src={ad.file_url} alt="Advertisement thumbnail" width="128" height="80" className="w-32 h-20 object-cover rounded-lg shrink-0" />
       )}
 
       {/* Info */}

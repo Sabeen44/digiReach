@@ -83,7 +83,9 @@ export default function DashboardMyAd({ userId }) {
                 ) : (
                   <img
                     src={currentAd.file_url}
-                    alt="Current ad"
+                    alt="Your current advertisement"
+                    width="512"
+                    height="128"
                     className="w-full h-32 object-cover"
                   />
                 )}

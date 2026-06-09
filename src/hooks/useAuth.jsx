@@ -10,21 +10,24 @@ export function AuthProvider({ children }) {
   const activeUserIdRef                     = useRef(null);
 
   const fetchProfile = useCallback(async (userId) => {
-    const { data } = await supabase
+    const { data, error: profileError } = await supabase
       .from("profiles")
       .select("subscription_status, plan_id, stripe_customer_id")
       .eq("id", userId)
       .single();
 
+    if (profileError) console.error("fetchProfile error:", profileError);
+
     // Bail if the user logged out (or a different user logged in) while we were fetching
     if (activeUserIdRef.current !== userId || !data) return;
 
-    const { count } = await supabase
+    const { count, error: adsError } = await supabase
       .from("ads")
-      .select("store_location_id", { count: "exact", head: true })
+      .select("id", { count: "exact", head: true })
       .eq("user_id", userId)
       .eq("status", "approved");
 
+    if (adsError) console.error("fetchProfile ads count error:", adsError);
     if (activeUserIdRef.current !== userId) return;
 
     setProfile({ ...data, location_count: count ?? 0 });

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogPanel, DialogTitle } from "@headlessui/react";
+import { Dialog, DialogPanel } from "@headlessui/react";
 import digiScreen2 from "../assets/images/digiscreen2.jpg"
 
 const dotGrid = {
@@ -101,7 +101,7 @@ export default function About() {
                 className="rounded-xl bg-indigo-500 px-8 py-3.5 text-sm font-semibold text-white hover:bg-indigo-400 transition-all duration-200"
                 style={{ boxShadow: "0 4px 20px rgba(99,102,241,0.3)" }}
               >
-                Learn more
+                See how to get started
               </button>
               <a
                 href="/contact"
@@ -118,6 +118,8 @@ export default function About() {
               <img
                 src={digiScreen2}
                 alt="Digital signage display"
+                width="1503"
+                height="1017"
                 className="object-cover w-full h-full"
               />
             </div>

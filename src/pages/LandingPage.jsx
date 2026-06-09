@@ -1,4 +1,3 @@
-// import MarketingLayout from "../layouts/MarketingLayout";
 import Hero from "../components/landing/Hero";
 import HowItWorks from "../components/landing/HowItWorks";
 import Testimonials from "../components/landing/Testimonials";

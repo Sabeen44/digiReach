@@ -206,6 +206,8 @@ export default function ScreensShowcase({ screens = defaultScreens }) {
               key={active.src}
               src={active.src}
               alt={active.label}
+              width="512"
+              height="288"
               className={`w-full h-72 sm:h-80 object-cover block transition-opacity duration-200 ${
                 fading ? "opacity-0" : "opacity-100"
               }`}
@@ -271,6 +273,8 @@ export default function ScreensShowcase({ screens = defaultScreens }) {
                 <img
                   src={screen.src}
                   alt={screen.label}
+                  width="512"
+                  height="288"
                   className="w-full h-full object-cover block pointer-events-none"
                 />
               </button>

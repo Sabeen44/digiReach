@@ -47,7 +47,9 @@ export default function Carousel({
             <img
               key={idx}
               src={src}
-              alt=""
+              alt={`Digital signage screen in a local venue ${idx + 1}`}
+              width="1500"
+              height="1033"
               className="w-full flex-shrink-0 object-cover h-80"
             />
           ))}
@@ -59,6 +61,7 @@ export default function Carousel({
         {/* Left arrow */}
         <button
           onClick={prev}
+          aria-label="Previous slide"
           className="absolute left-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm text-white hover:bg-white/15 hover:border-white/20 transition-all duration-200"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -69,6 +72,7 @@ export default function Carousel({
         {/* Right arrow */}
         <button
           onClick={next}
+          aria-label="Next slide"
           className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-9 h-9 rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm text-white hover:bg-white/15 hover:border-white/20 transition-all duration-200"
         >
           <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -82,6 +86,7 @@ export default function Carousel({
             <button
               key={idx}
               onClick={() => setCurrent(idx)}
+              aria-label={`Go to slide ${idx + 1}`}
               className={`h-1.5 rounded-full cursor-pointer transition-all duration-300 ${
                 current === idx
                   ? "w-6 bg-indigo-400"

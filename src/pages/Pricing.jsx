@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { PLAN_LIST } from "../config/plans";
@@ -14,15 +14,38 @@ export default function Pricing() {
   const navigate = useNavigate();
   const location = useLocation();
   const { session } = useAuth();
+  const [loadingPlan, setLoadingPlan] = useState(null);
+  const [checkoutError, setCheckoutError] = useState("");
 
   const params = new URLSearchParams(location.search);
   const preselectedPlan = params.get("plan");
 
-  useEffect(() => {
-    if (session && preselectedPlan) {
-      createCheckout(preselectedPlan);
+  const createCheckout = async (planId) => {
+    const plan = PLAN_LIST.find((p) => p.id === planId);
+    if (!plan) return;
+
+    setLoadingPlan(planId);
+    setCheckoutError("");
+
+    try {
+      const res = await fetch(`${apiBase}/create-checkout-session`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ priceId: plan.priceId, userId: session.user.id }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setCheckoutError(data.error || "Checkout failed. Please try again.");
+      }
+    } catch (err) {
+      console.error("Checkout error:", err);
+      setCheckoutError("Unable to reach the payment server. Please try again in a moment.");
+    } finally {
+      setLoadingPlan(null);
     }
-  }, [session, preselectedPlan]);
+  };
 
   const handleSelectPlan = (planId) => {
     if (!session) {
@@ -32,22 +55,13 @@ export default function Pricing() {
     createCheckout(planId);
   };
 
-  const createCheckout = async (planId) => {
-    const plan = PLAN_LIST.find((p) => p.id === planId);
-    if (!plan) return;
-
-    try {
-      const res = await fetch(`${apiBase}/create-checkout-session`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ priceId: plan.priceId, userId: session.user.id }),
-      });
-      const data = await res.json();
-      if (data.url) window.location.href = data.url;
-    } catch (err) {
-      console.error("Checkout error:", err);
+  useEffect(() => {
+    if (session && preselectedPlan) {
+      createCheckout(preselectedPlan);
     }
-  };
+  // createCheckout is stable within a render — session/preselectedPlan are the real triggers
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session, preselectedPlan]);
 
   return (
     <div className="relative bg-gray-950 min-h-screen overflow-hidden">
@@ -89,6 +103,13 @@ export default function Pricing() {
             Monthly plans. Per-location pricing. Cancel anytime.
           </p>
         </div>
+
+        {/* Checkout error banner */}
+        {checkoutError && (
+          <div className="mb-8 rounded-xl border border-red-500/30 bg-red-500/10 px-5 py-3.5 text-sm text-red-300 text-center">
+            {checkoutError}
+          </div>
+        )}
 
         {/* Pricing cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -157,14 +178,15 @@ export default function Pricing() {
               {/* CTA button */}
               <button
                 onClick={() => handleSelectPlan(tier.id)}
-                className={`relative mt-8 w-full rounded-xl py-3 text-sm font-semibold transition-all duration-200 ${
+                disabled={loadingPlan !== null}
+                className={`relative mt-8 w-full rounded-xl py-3 text-sm font-semibold transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60 ${
                   tier.featured
                     ? "bg-indigo-500 text-white hover:bg-indigo-400"
                     : "border border-white/10 bg-white/5 text-white hover:bg-white/10 hover:border-white/20"
                 }`}
                 style={tier.featured ? { boxShadow: "0 4px 20px rgba(99,102,241,0.35)" } : {}}
               >
-                Choose {tier.name}
+                {loadingPlan === tier.id ? "Redirecting…" : `Choose ${tier.name}`}
               </button>
             </div>
           ))}

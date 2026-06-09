@@ -10,7 +10,7 @@ export default function Footer() {
 
           {/* Brand col */}
           <div>
-            <img src={digiImage} alt="digiReach" className="h-24 w-auto mb-5 opacity-90" />
+            <img src={digiImage} alt="digiReach" width="1024" height="1024" className="h-24 w-auto mb-5 opacity-90" />
             <p className="text-sm text-gray-500 leading-relaxed max-w-xs">
               Connecting advertisers with local audiences through smart, screen-based digital advertising.
             </p>

@@ -1,5 +1,3 @@
-// import { useEffect, useRef } from "react";
-
   const logos = [
     { name: "Mayuri" },
     { name: "Shalimar" },

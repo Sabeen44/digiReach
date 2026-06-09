@@ -39,7 +39,7 @@ export default function NavBar() {
           <div className="flex flex-1">
             <Link to="/" className="flex items-center -m-1.5 p-1.5">
               <span className="sr-only">digiReach</span>
-              <img src={digiImage} alt="digiReach" className="h-40 w-auto" />
+              <img src={digiImage} alt="digiReach" width="1024" height="1024" className="h-40 w-auto" />
             </Link>
           </div>
 
@@ -47,6 +47,7 @@ export default function NavBar() {
           <div className="flex lg:hidden">
             <button
               type="button"
+              aria-label="Open menu"
               onClick={() => setMobileMenuOpen(true)}
               className="inline-flex items-center justify-center rounded-lg p-2 text-gray-400 hover:text-white hover:bg-white/5 transition"
             >

@@ -154,7 +154,7 @@ export default function UploadAd() {
             {uploadedAd.fileType?.startsWith("video") ? (
               <video src={uploadedAd.fileUrl} controls className="w-full rounded-xl" />
             ) : (
-              <img src={uploadedAd.fileUrl} alt="Ad preview" className="w-full rounded-xl object-cover max-h-64" />
+              <img src={uploadedAd.fileUrl} alt="Ad preview" width="512" height="256" className="w-full rounded-xl object-cover max-h-64" />
             )}
           </div>
 

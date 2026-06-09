@@ -119,7 +119,7 @@ export default function HowItWorks() {
             to="/pricing"
             className="inline-flex items-center gap-2 rounded-xl bg-indigo-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:bg-indigo-400 hover:shadow-indigo-400/40 transition-all duration-200"
           >
-            Get started today
+            Get started with DigiReach
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
             </svg>

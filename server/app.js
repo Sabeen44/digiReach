@@ -9,6 +9,9 @@ app.use(cors({
   origin: process.env.CLIENT_URL,
 }));
 
+// ── Health check (Railway uses this to confirm the service is up) ─────────────
+app.get("/health", (_req, res) => res.json({ ok: true }));
+
 // ── Webhook needs raw body before express.json() ─────────────────────────────
 app.use("/webhook", express.raw({ type: "application/json" }));
 

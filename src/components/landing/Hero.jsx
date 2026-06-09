@@ -1,5 +1,3 @@
-// import Carousel from "./Carousel";
-
 import LiveMap from "./LiveMap";
 
 import { Link } from "react-router-dom";
@@ -80,7 +78,7 @@ export default function Hero() {
               to="/pricing"
               className="relative inline-flex items-center justify-center rounded-xl bg-indigo-500 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/30 hover:bg-indigo-400 hover:shadow-indigo-400/40 transition-all duration-200"
             >
-              Get started
+              Get started with DigiReach
               <svg className="ml-2 w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" />
               </svg>
@@ -90,7 +88,7 @@ export default function Hero() {
               to="/about"
               className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 backdrop-blur-sm px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10 hover:border-white/20 transition-all duration-200"
             >
-              Learn more
+              Learn more about DigiReach
             </Link>
           </div>
 

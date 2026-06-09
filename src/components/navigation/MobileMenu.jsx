@@ -26,10 +26,11 @@ export default function MobileMenu({ open, onClose, currentPath, isHome }) {
         {/* Header */}
         <div className="flex items-center justify-between mb-8">
           <Link to="/" onClick={onClose}>
-            <img src={digiImage} alt="digiReach" className="h-16 w-auto" />
+            <img src={digiImage} alt="digiReach" width="1024" height="1024" className="h-16 w-auto" />
           </Link>
           <button
             onClick={onClose}
+            aria-label="Close menu"
             className="rounded-lg p-2 text-gray-400 hover:text-white hover:bg-white/5 transition"
           >
             <XMarkIcon className="h-5 w-5" />
