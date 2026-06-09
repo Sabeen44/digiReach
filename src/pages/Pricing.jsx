@@ -4,6 +4,7 @@ import { useAuth } from "../hooks/useAuth";
 import { PLAN_LIST } from "../config/plans";
 
 const rawApi = import.meta.env.VITE_API_URL || "http://localhost:4242";
+console.log("API URL:", rawApi); // add this line
 const apiBase = rawApi.startsWith("http") ? rawApi : `https://${rawApi}`;
 
 const dotGrid = {
