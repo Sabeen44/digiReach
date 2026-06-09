@@ -1,5 +1,9 @@
 import express from "express";
 import { stripe, supabaseAdmin } from "./stripe.js";
+import cors from "cors";
+
+router.options("*", cors());
+
 
 const clientUrl = (process.env.CLIENT_URL || "").trim().replace(/\/$/, "");
 import { PLAN_LOCATIONS } from "./config/plans.js";

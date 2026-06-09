@@ -5,21 +5,14 @@ import router from "./routes.js";
 const app = express();
 
 // ── Standard middleware ───────────────────────────────────────────────────────
-const allowedOrigins = new Set([
-  "https://www.digireachnow.com",
-  "https://digireachnow.com",
-  "https://digi-reach.vercel.app",
-  "http://localhost:5173",
-  "http://localhost:4173",
-  process.env.CLIENT_URL,
-].filter(Boolean).map(o => o.trim().replace(/\/$/, "")));
-
 app.use(cors({
-  origin: (origin, cb) => {
-    if (!origin) return cb(null, true);
-    if (allowedOrigins.has(origin.replace(/\/$/, ""))) return cb(null, true);
-    cb(new Error(`CORS blocked: ${origin}`));
-  },
+  origin: [
+    "https://www.digireachnow.com",
+    "https://digireachnow.com",
+    "https://digi-reach.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:4173",
+  ],
   credentials: true,
 }));
 
