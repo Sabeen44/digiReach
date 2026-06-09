@@ -1,5 +1,7 @@
 import express from "express";
 import { stripe, supabaseAdmin } from "./stripe.js";
+
+const clientUrl = (process.env.CLIENT_URL || "").trim().replace(/\/$/, "");
 import { PLAN_LOCATIONS } from "./config/plans.js";
 import {
   findUserByCustomerId,
@@ -99,8 +101,8 @@ router.post("/create-checkout-session", async (req, res) => {
       mode: "subscription",
       payment_method_types: ["card"],
       line_items: [{ price: priceId, quantity: 1 }],
-      success_url: `${process.env.CLIENT_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.CLIENT_URL}/pricing`,
+      success_url: `${clientUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: `${clientUrl}/pricing`,
       metadata: { userId }, // ✅ userId correctly passed
     });
     res.json({ url: session.url });
@@ -129,8 +131,8 @@ router.post("/upgrade-plan", async (req, res) => {
         mode: "subscription",
         customer: customerId,
         line_items: [{ price: newPriceId, quantity: 1 }],
-        success_url: `${process.env.CLIENT_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.CLIENT_URL}/dashboard`,
+        success_url: `${clientUrl}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${clientUrl}/dashboard`,
       });
       return res.json({ url: session.url });
     }
@@ -160,7 +162,7 @@ router.post("/create-portal-session", async (req, res) => {
   try {
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customerId,
-      return_url: `${process.env.CLIENT_URL}/dashboard`,
+      return_url: `${clientUrl}/dashboard`,
     });
     res.json({ url: portalSession.url });
   } catch (err) {

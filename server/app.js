@@ -5,8 +5,20 @@ import router from "./routes.js";
 const app = express();
 
 // ── Standard middleware ───────────────────────────────────────────────────────
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  "http://localhost:5173",
+  "http://localhost:4173",
+].filter(Boolean).map(o => o.trim().replace(/\/$/, ""));
+
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: (origin, cb) => {
+    // allow non-browser requests (curl, Stripe webhooks, etc.)
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin.replace(/\/$/, ""))) return cb(null, true);
+    cb(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
 }));
 
 // ── Health check (Railway uses this to confirm the service is up) ─────────────
