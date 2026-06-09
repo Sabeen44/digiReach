@@ -1,4 +1,3 @@
-
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
@@ -11,6 +10,8 @@ dotenv.config({ path: join(__dirname, ".env") });
 try {
   const { default: app } = await import("./app.js");
   const PORT = process.env.PORT || 4242;
+  console.log("ENV PORT:", process.env.PORT);
+  console.log("Using PORT:", PORT);
   app.listen(PORT, "0.0.0.0", () => console.log(`Stripe server running on port ${PORT}`));
 } catch (err) {
   console.error("Failed to start server:", err);
