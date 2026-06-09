@@ -1,5 +1,4 @@
 import express from "express";
-import cors from "cors";
 import { stripe, supabaseAdmin } from "./stripe.js";
 import { PLAN_LOCATIONS } from "./config/plans.js";
 import {
@@ -10,8 +9,6 @@ import {
 
 const router = express.Router();
 const clientUrl = (process.env.CLIENT_URL || "").trim().replace(/\/$/, "");
-
-router.options("*", cors());
 
 
 // ── Webhook ───────────────────────────────────────────────────────────────────
