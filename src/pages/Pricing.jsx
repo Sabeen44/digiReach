@@ -3,7 +3,8 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { PLAN_LIST } from "../config/plans";
 
-const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4242";
+const rawApi = import.meta.env.VITE_API_URL || "http://localhost:4242";
+const apiBase = rawApi.startsWith("http") ? rawApi : `https://${rawApi}`;
 
 const dotGrid = {
   backgroundImage: "radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px)",

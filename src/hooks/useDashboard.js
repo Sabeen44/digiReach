@@ -2,7 +2,8 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./useAuth";
 
-const apiBase = import.meta.env.VITE_API_URL || "http://localhost:4242";
+const rawApi = import.meta.env.VITE_API_URL || "http://localhost:4242";
+const apiBase = rawApi.startsWith("http") ? rawApi : `https://${rawApi}`;
 
 export function useDashboard() {
   const navigate = useNavigate();
