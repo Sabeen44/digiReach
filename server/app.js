@@ -7,6 +7,7 @@ const app = express();
 // ── Standard middleware ───────────────────────────────────────────────────────
 const allowedOrigins = [
   process.env.CLIENT_URL,
+  "https://digi-reach.vercel.app",
   "http://localhost:5173",
   "http://localhost:4173",
 ].filter(Boolean).map(o => o.trim().replace(/\/$/, ""));
