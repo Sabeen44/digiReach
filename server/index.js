@@ -5,7 +5,10 @@ import { dirname, join } from "path";
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-dotenv.config({ path: join(__dirname, ".env") });
+// Only load .env in development
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config({ path: join(__dirname, ".env") });
+}
 
 try {
   const { default: app } = await import("./app.js");
